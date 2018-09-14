@@ -1,0 +1,521 @@
+--- a/src/auxiliar.h
++++ b/src/auxiliar.h
+@@ -29,6 +29,10 @@
+ * reverse mapping are done using lauxlib. 
+ \*=========================================================================*/
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "lua.h"
+ #include "lauxlib.h"
+ 
+@@ -44,4 +48,8 @@ int auxiliar_checkboolean(lua_State *L, int objidx);
+ int auxiliar_tostring(lua_State *L);
+ int auxiliar_typeerror(lua_State *L, int narg, const char *tname);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* AUXILIAR_H */
+--- a/src/buffer.c
++++ b/src/buffer.c
+@@ -2,9 +2,6 @@
+ * Input/Output interface for Lua programs
+ * LuaSocket toolkit
+ \*=========================================================================*/
+-#include "lua.h"
+-#include "lauxlib.h"
+-
+ #include "buffer.h"
+ 
+ /*=========================================================================*\
+--- a/src/buffer.h
++++ b/src/buffer.h
+@@ -15,7 +15,12 @@
+ * The module is built on top of the I/O abstraction defined in io.h and the
+ * timeout management is done with the timeout.h interface.
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "lua.h"
++#include "lauxlib.h"
+ 
+ #include "io.h"
+ #include "timeout.h"
+@@ -42,4 +47,8 @@ int buffer_meth_getstats(lua_State *L, p_buffer buf);
+ int buffer_meth_setstats(lua_State *L, p_buffer buf);
+ int buffer_isempty(p_buffer buf);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* BUF_H */
+--- a/src/except.c
++++ b/src/except.c
+@@ -4,9 +4,6 @@
+ \*=========================================================================*/
+ #include <stdio.h>
+ 
+-#include "lua.h"
+-#include "lauxlib.h"
+-
+ #include "except.h"
+ 
+ /*=========================================================================*\
+--- a/src/except.h
++++ b/src/except.h
+@@ -25,9 +25,17 @@
+ * With these two function, it's easy to write functions that throw
+ * exceptions on error, but that don't interrupt the user script. 
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
+ 
+ #include "lua.h"
++#include "lauxlib.h"
+ 
+ int except_open(lua_State *L);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif
+--- a/src/if.c
++++ b/src/if.c
+@@ -17,8 +17,6 @@
+ 
+ #include "if.h"
+ 
+-#include "lauxlib.h"
+-
+ static int if_global_indextoname(lua_State *L);
+ static int if_global_nametoindex(lua_State *L);
+ static int if_global_nameindex(lua_State *L);
+--- a/src/if.h
++++ b/src/if.h
+@@ -20,8 +20,17 @@
+ #ifndef IF_H
+ #define IF_H
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "lua.h"
++#include "lauxlib.h"
+ 
+ int if_open(lua_State *L);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* IF_H */
+--- a/src/inet.c
++++ b/src/inet.c
+@@ -6,9 +6,6 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
+-#include "lua.h"
+-#include "lauxlib.h"
+-
+ #include "inet.h"
+ 
+ /*=========================================================================*\
+--- a/src/inet.h
++++ b/src/inet.h
+@@ -14,7 +14,12 @@
+ *
+ * The Lua functions toip and tohostname are also implemented here.
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "lua.h"
++#include "lauxlib.h"
+ #include "socket.h"
+ #include "timeout.h"
+ 
+@@ -47,4 +52,8 @@ const char *inet_ntop(int af, const void *src, char *dst, socklen_t cnt);
+ int inet_pton(int af, const char *src, void *dst);
+ #endif
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* INET_H */
+--- a/src/io.h
++++ b/src/io.h
+@@ -12,6 +12,10 @@
+ * The module socket.h implements this interface, and thus the module tcp.h
+ * is very simple.
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include <stdio.h>
+ #include "lua.h"
+ 
+@@ -61,5 +65,9 @@ typedef t_io *p_io;
+ void io_init(p_io io, p_send send, p_recv recv, p_error error, void *ctx);
+ const char *io_strerror(int err);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* IO_H */
+ 
+--- a/src/luasocket.h
++++ b/src/luasocket.h
+@@ -6,6 +6,10 @@
+ * Diego Nehab
+ * 9/11/1999
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "lua.h"
+ 
+ /*-------------------------------------------------------------------------*\
+@@ -26,4 +30,8 @@
+ \*-------------------------------------------------------------------------*/
+ LUASOCKET_API int luaopen_socket_core(lua_State *L);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* LUASOCKET_H */
+--- a/src/mime.c
++++ b/src/mime.c
+@@ -4,15 +4,12 @@
+ \*=========================================================================*/
+ #include <string.h>
+ 
+-#include "lua.h"
+-#include "lauxlib.h"
++#include "mime.h"
+ 
+ #if !defined(LUA_VERSION_NUM) || (LUA_VERSION_NUM < 501)
+ #include "compat-5.1.h"
+ #endif
+ 
+-#include "mime.h"
+-
+ /*=========================================================================*\
+ * Don't want to trust escape character constants
+ \*=========================================================================*/
+--- a/src/mime.h
++++ b/src/mime.h
+@@ -8,7 +8,12 @@
+ * and formatting conforming to RFC 2045. It is used by mime.lua, which
+ * provide a higher level interface to this functionality. 
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "lua.h"
++#include "lauxlib.h"
+ 
+ /*-------------------------------------------------------------------------*\
+ * Current MIME library version
+@@ -26,4 +31,8 @@
+ 
+ MIME_API int luaopen_mime_core(lua_State *L);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* MIME_H */
+--- a/src/options.c
++++ b/src/options.c
+@@ -7,8 +7,6 @@
+ #include <sys/socket.h>
+ #include <net/if.h>
+ 
+-#include "lauxlib.h"
+-
+ #include "auxiliar.h"
+ #include "options.h"
+ #include "inet.h"
+--- a/src/options.h
++++ b/src/options.h
+@@ -7,8 +7,12 @@
+ * This module provides a common interface to socket options, used mainly by
+ * modules UDP and TCP. 
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
+ 
+ #include "lua.h"
++#include "lauxlib.h"
+ #include "socket.h"
+ 
+ /* option registry */
+@@ -57,4 +61,8 @@ int opt_get_ip6_v6only(lua_State *L, p_socket ps);
+ int opt_meth_setoption(lua_State *L, p_opt opt, p_socket ps);
+ int opt_meth_getoption(lua_State *L, p_opt opt, p_socket ps);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif
+--- a/src/select.c
++++ b/src/select.c
+@@ -4,9 +4,6 @@
+ \*=========================================================================*/
+ #include <string.h>
+ 
+-#include "lua.h"
+-#include "lauxlib.h"
+-
+ #include "socket.h"
+ #include "timeout.h"
+ #include "select.h"
+--- a/src/select.h
++++ b/src/select.h
+@@ -9,7 +9,17 @@
+ * underlying select function. Another method, dirty(), should return 
+ * true if there is data ready for reading (required for buffered input).
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++#include "lua.h"
++#include "lauxlib.h"
+ 
+ int select_open(lua_State *L);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* SELECT_H */
+--- a/src/socket.h
++++ b/src/socket.h
+@@ -9,6 +9,10 @@
+ * (and the associated usocket.h and wsocket.h) factor these differences and
+ * creates a interface compatible with the io.h module.
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "io.h"
+ 
+ /*=========================================================================*\
+@@ -75,4 +79,7 @@ const char *socket_ioerror(p_socket ps, int err);
+ int socket_gethostbyaddr(const char *addr, socklen_t len, struct hostent **hp);
+ int socket_gethostbyname(const char *addr, struct hostent **hp);
+ 
++#ifdef __cplusplus
++}
++#endif
+ #endif /* SOCKET_H */
+--- a/src/tcp.c
++++ b/src/tcp.c
+@@ -4,9 +4,6 @@
+ \*=========================================================================*/
+ #include <string.h>
+ 
+-#include "lua.h"
+-#include "lauxlib.h"
+-
+ #include "auxiliar.h"
+ #include "socket.h"
+ #include "inet.h"
+--- a/src/tcp.h
++++ b/src/tcp.h
+@@ -14,7 +14,12 @@
+ * tcp objects either connected to some address or returned by the accept
+ * method of a server object.
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "lua.h"
++#include "lauxlib.h"
+ 
+ #include "buffer.h"
+ #include "timeout.h"
+@@ -32,4 +37,8 @@ typedef t_tcp *p_tcp;
+ 
+ int tcp_open(lua_State *L);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* TCP_H */
+--- a/src/timeout.c
++++ b/src/timeout.c
+@@ -6,9 +6,6 @@
+ #include <limits.h>
+ #include <float.h>
+ 
+-#include "lua.h"
+-#include "lauxlib.h"
+-
+ #include "auxiliar.h"
+ #include "timeout.h"
+ 
+--- a/src/timeout.h
++++ b/src/timeout.h
+@@ -4,7 +4,12 @@
+ * Timeout management functions
+ * LuaSocket toolkit
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "lua.h"
++#include "lauxlib.h"
+ 
+ /* timeout control structure */
+ typedef struct t_timeout_ {
+@@ -25,4 +30,8 @@ int timeout_meth_settimeout(lua_State *L, p_timeout tm);
+ 
+ #define timeout_iszero(tm)   ((tm)->block == 0.0)
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* TIMEOUT_H */
+--- a/src/udp.c
++++ b/src/udp.c
+@@ -5,9 +5,6 @@
+ #include <string.h>
+ #include <stdlib.h>
+ 
+-#include "lua.h"
+-#include "lauxlib.h"
+-
+ #include "auxiliar.h"
+ #include "socket.h"
+ #include "inet.h"
+--- a/src/udp.h
++++ b/src/udp.h
+@@ -12,7 +12,12 @@
+ * with a call to the setpeername function. The same function can be used to
+ * break the connection.
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "lua.h"
++#include "lauxlib.h"
+ 
+ #include "timeout.h"
+ #include "socket.h"
+@@ -29,4 +34,8 @@ typedef t_udp *p_udp;
+ 
+ int udp_open(lua_State *L);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* UDP_H */
+--- a/src/unix.c
++++ b/src/unix.c
+@@ -4,9 +4,6 @@
+ \*=========================================================================*/
+ #include <string.h> 
+ 
+-#include "lua.h"
+-#include "lauxlib.h"
+-
+ #include "auxiliar.h"
+ #include "socket.h"
+ #include "options.h"
+--- a/src/unix.h
++++ b/src/unix.h
+@@ -7,7 +7,12 @@
+ * This module is just an example of how to extend LuaSocket with a new 
+ * domain.
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ #include "lua.h"
++#include "lauxlib.h"
+ 
+ #include "buffer.h"
+ #include "timeout.h"
+@@ -27,4 +32,8 @@ typedef t_unix *p_unix;
+ 
+ UNIX_API int luaopen_socket_unix(lua_State *L);
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* UNIX_H */
+--- a/src/usocket.h
++++ b/src/usocket.h
+@@ -8,6 +8,10 @@
+ /*=========================================================================*\
+ * BSD include files
+ \*=========================================================================*/
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ /* error codes */
+ #include <errno.h>
+ /* close function */
+@@ -56,4 +60,8 @@ typedef struct sockaddr_storage t_sockaddr_storage;
+ 
+ #define SOCKET_INVALID (-1)
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* USOCKET_H */
+--- a/src/wsocket.h
++++ b/src/wsocket.h
+@@ -5,6 +5,10 @@
+ * LuaSocket toolkit
+ \*=========================================================================*/
+ 
++#ifdef __cplusplus
++extern "C" {
++#endif
++
+ /*=========================================================================*\
+ * WinSock include files
+ \*=========================================================================*/
+@@ -30,4 +34,8 @@ typedef t_socket *p_socket;
+ #define AI_NUMERICSERV (0)
+ #endif
+ 
++#ifdef __cplusplus
++}
++#endif
++
+ #endif /* WSOCKET_H */

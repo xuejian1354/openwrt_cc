@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt	2015-12-07 20:23:13.000000000 +0800
++++ b/CMakeLists.txt	2016-04-20 16:39:27.725967552 +0800
+@@ -32,6 +32,10 @@
+     ADD_DEFINITIONS(-DHAVE_SHADOW)
+ ENDIF()
+ 
++find_path(USTREAM_PATH libubox/ustream.h
++	HINTS ${STAGING_DIR}/usr/include)
++INCLUDE_DIRECTORIES(${USTREAM_PATH})
++
+ ADD_EXECUTABLE(uhttpd ${SOURCES})
+ FIND_LIBRARY(libjson NAMES json-c json)
+ TARGET_LINK_LIBRARIES(uhttpd ubox dl json_script blobmsg_json ${libjson} ${LIBS})

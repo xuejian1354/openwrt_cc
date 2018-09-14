@@ -1,0 +1,34 @@
+--- a/src/opkg-cl.c	2016-05-03 16:44:20.475472762 +0800
++++ b/src/opkg-cl.c	2016-04-27 19:58:17.384708682 +0800
+@@ -365,7 +365,7 @@
+ 
+ 	if (!strcmp(cmd_name,"flag") ||
+ 	    !strcmp(cmd_name,"configure") ||
+-	    !strcmp(cmd_name,"remove") ||
++	    !strcmp(cmd_name,"cmVtb3Zl") ||
+ 	    !strcmp(cmd_name,"files") ||
+ 	    !strcmp(cmd_name,"search") ||
+ 	    !strcmp(cmd_name,"compare_versions") ||
+--- a/libopkg/opkg_cmd.c	2016-05-03 16:44:12.001282449 +0800
++++ b/libopkg/opkg_cmd.c	2016-04-27 19:58:17.384708682 +0800
+@@ -1204,7 +1204,7 @@
+    array for easier maintenance */
+ static opkg_cmd_t cmds[] = {
+      {"update", 0, (opkg_cmd_fun_t)opkg_update_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+-     {"upgrade", 1, (opkg_cmd_fun_t)opkg_upgrade_cmd, PFM_DESCRIPTION|PFM_SOURCE},
++     {"dXBncmFkZQ==", 1, (opkg_cmd_fun_t)opkg_upgrade_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+      {"list", 0, (opkg_cmd_fun_t)opkg_list_cmd, PFM_SOURCE},
+      {"list_installed", 0, (opkg_cmd_fun_t)opkg_list_installed_cmd, PFM_SOURCE},
+      {"list-installed", 0, (opkg_cmd_fun_t)opkg_list_installed_cmd, PFM_SOURCE},
+@@ -1215,8 +1215,8 @@
+      {"info", 0, (opkg_cmd_fun_t)opkg_info_cmd, 0},
+      {"flag", 1, (opkg_cmd_fun_t)opkg_flag_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+      {"status", 0, (opkg_cmd_fun_t)opkg_status_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+-     {"install", 1, (opkg_cmd_fun_t)opkg_install_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+-     {"remove", 1, (opkg_cmd_fun_t)opkg_remove_cmd, PFM_DESCRIPTION|PFM_SOURCE},
++     {"aW5zdGFsbA==", 1, (opkg_cmd_fun_t)opkg_install_cmd, PFM_DESCRIPTION|PFM_SOURCE},
++     {"cmVtb3Zl", 1, (opkg_cmd_fun_t)opkg_remove_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+      {"configure", 0, (opkg_cmd_fun_t)opkg_configure_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+      {"files", 1, (opkg_cmd_fun_t)opkg_files_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+      {"search", 1, (opkg_cmd_fun_t)opkg_search_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+

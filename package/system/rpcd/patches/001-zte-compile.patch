@@ -1,0 +1,17 @@
+--- a/CMakeLists.txt	2015-12-07 20:21:54.000000000 +0800
++++ b/CMakeLists.txt	2016-04-20 17:27:31.544054313 +0800
+@@ -25,9 +25,13 @@
+ FIND_LIBRARY(json NAMES json-c json)
+ FIND_LIBRARY(crypt NAMES crypt)
+ IF(crypt STREQUAL "crypt-NOTFOUND")
+-  SET(crypt "")
++  SET(crypt "-lcrypt")
+ ENDIF()
+ 
++find_path(UBUS_PATH libubus.h
++	HINTS ${STAGING_DIR}/usr/include)
++INCLUDE_DIRECTORIES(${UBUS_PATH})
++
+ ADD_EXECUTABLE(rpcd main.c exec.c session.c uci.c plugin.c)
+ TARGET_LINK_LIBRARIES(rpcd ubox ubus uci dl blobmsg_json ${json} ${crypt})
+ 

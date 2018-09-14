@@ -1,0 +1,65 @@
+--- a/libopkg/pkg.c
++++ b/libopkg/pkg.c
+@@ -101,6 +101,8 @@ pkg_init(pkg_t *pkg)
+      pkg->self_interface_count = 0;
+      pkg->use_interface_str = NULL;
+      pkg->use_interface_count = 0;	 	
++	 pkg->use_gwsys_path_str = NULL;
++	 pkg->use_gwsys_path_count = 0;
+      pkg->subscribe_event_str = NULL;
+      pkg->subscribe_event_count = 0;
+ 
+@@ -942,6 +944,15 @@ pkg_formatted_field(FILE *fp, pkg_t *pkg
+                    }
+                    fprintf(fp, "\n");
+                }
++          } else if (strcasecmp(field, "UseGwSystemPath") == 0) {
++               if (pkg->use_gwsys_path_count) {
++                   fprintf(fp, "UseGwSystemPath:");
++                   for (i = 0; i < pkg->use_gwsys_path_count; i++) {
++                       pkg_fix_field_value(pkg->use_gwsys_path_str[i]);
++                       fprintf(fp, "%s %s", i == 0 ? "" : " ", pkg->use_gwsys_path_str[i]);
++                   }
++                   fprintf(fp, "\n");
++               }
+           } else if (strcasecmp(field, "UseDataUds") == 0) {
+                if (pkg->use_data_uds) {
+                        fprintf(fp, "UseDataUds: %s\n", pkg->use_data_uds);
+@@ -1002,6 +1013,7 @@ pkg_formatted_info(FILE *fp, pkg_t *pkg)
+ 	pkg_formatted_field(fp, pkg, "Capabilities");
+ 	pkg_formatted_field(fp, pkg, "SelfInterface");
+ 	pkg_formatted_field(fp, pkg, "UseInterface");
++	pkg_formatted_field(fp, pkg, "UseGwSystemPath");
+ 	pkg_formatted_field(fp, pkg, "SubscribeEvent");
+ 
+ 	pkg_formatted_field(fp, pkg, "Vendor");
+@@ -1043,6 +1055,7 @@ pkg_print_status(pkg_t * pkg, FILE * fil
+      pkg_formatted_field(file, pkg, "Capabilities");
+      pkg_formatted_field(file, pkg, "SelfInterface");
+      pkg_formatted_field(file, pkg, "UseInterface");
++	 pkg_formatted_field(file, pkg, "UseGwSystemPath");
+      pkg_formatted_field(file, pkg, "SubscribeEvent");
+      pkg_formatted_field(file, pkg, "SelfDataUds");
+      pkg_formatted_field(file, pkg, "UseDataUds");
+--- a/libopkg/pkg.h
++++ b/libopkg/pkg.h
+@@ -147,6 +147,8 @@ struct pkg
+      unsigned int self_interface_count;
+      char **use_interface_str;
+      unsigned int use_interface_count;
++     char **use_gwsys_path_str;
++     unsigned int use_gwsys_path_count;	 
+      char **subscribe_event_str;
+      unsigned int subscribe_event_count;
+ 
+--- a/libopkg/pkg_parse.c
++++ b/libopkg/pkg_parse.c
+@@ -276,6 +276,8 @@ pkg_parse_line(void *ptr, const char *li
+          case 'U':
+ 		if (is_field("UseInterface", line))
+                      pkg->use_interface_str = parse_list(line, &pkg->use_interface_count, ' ', 0);
++		else if (is_field("UseGwSystemPath", line))
++                     pkg->use_gwsys_path_str = parse_list(line, &pkg->use_gwsys_path_count, ' ', 0);		
+ 		else if (is_field("UseDataUds", line))
+                         pkg->use_data_uds = parse_simple("UseDataUds", line);
+ 		break;

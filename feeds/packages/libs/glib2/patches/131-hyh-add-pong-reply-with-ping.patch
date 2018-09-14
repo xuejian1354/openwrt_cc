@@ -1,0 +1,41 @@
+--- a/gio/gdbusconnection.c
++++ b/gio/gdbusconnection.c
+@@ -5867,6 +5867,7 @@ decode_method_reply (GDBusMessage
+                      GError             **error)
+ {
+   GVariant *result;
++  gchar *member = NULL;
+ 
+   result = NULL;
+   switch (g_dbus_message_get_message_type (reply))
+@@ -5875,8 +5876,17 @@ decode_method_reply (GDBusMessage
+       result = g_dbus_message_get_body (reply);
+       if (result == NULL)
+         {
+-          result = g_variant_new ("()");
+-          g_variant_ref_sink (result);
++	       //parse "Pong" reply for Ping message by yunhuihu		  
++		   member = g_dbus_message_get_member(reply);		  
++		   if ((member != NULL) && (g_strcmp0(member, "Pong") == 0))		 
++		   {			  
++		        result = g_variant_new ("(s)", "Pong");						  
++		   }		 
++		   else		 
++		   {			  
++			result = g_variant_new ("()");		  
++		   }			
++           g_variant_ref_sink (result);
+         }
+       else
+         {
+@@ -7167,6 +7177,10 @@ handle_generic_ping_unlocked (GDBusConne
+ {
+   GDBusMessage *reply;
+   reply = g_dbus_message_new_method_reply (message);
++
++  //add "Pong" reply for Ping message by yunhuihu  
++  g_dbus_message_set_member(reply, "Pong");
++  
+   g_dbus_connection_send_message_unlocked (connection, reply, G_DBUS_SEND_MESSAGE_FLAGS_NONE, NULL, NULL);
+   g_object_unref (reply);
+ }

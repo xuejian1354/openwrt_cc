@@ -1,0 +1,17 @@
+--- a/libopkg/opkg_conf.c	2017-03-03 15:31:38.221672043 +0800
++++ b/libopkg/opkg_conf.c.new	2017-04-18 14:51:41.841482706 +0800
+@@ -407,9 +407,13 @@
+ 
+      list_for_each_entry(iter, &conf->pkg_dest_list.head, node) {
+           dest = (pkg_dest_t *)iter->data;
+-          if (dest->status_fp && fclose(dest->status_fp) == EOF) {
++          if (dest->status_fp) { 
++             fflush(dest->status_fp);
++             fsync(fileno(dest->status_fp));
++             if (fclose(dest->status_fp) == EOF) {
+                opkg_perror(ERROR, "Couldn't close %s", dest->status_file_name);
+ 	       ret = -1;
++             }
+           }
+      }
+ 

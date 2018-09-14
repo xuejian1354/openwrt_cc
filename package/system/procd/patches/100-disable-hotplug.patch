@@ -1,0 +1,11 @@
+--- a/state.c	2016-03-08 11:53:51.243265317 +0800
++++ b/state.c	2016-03-08 11:53:59.673924459 +0800
+@@ -101,7 +101,7 @@
+ 	case STATE_EARLY:
+ 		LOG("- early -\n");
+ 		watchdog_init(0);
+-		hotplug("/etc/hotplug.json");
++		//hotplug("/etc/hotplug.json");
+ 		procd_coldplug();
+ 		break;
+ 

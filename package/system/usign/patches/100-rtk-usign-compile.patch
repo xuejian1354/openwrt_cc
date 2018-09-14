@@ -1,0 +1,15 @@
+--- a/CMakeLists.txt	2015-11-14 07:57:06.000000000 +0800
++++ b/CMakeLists.txt	2016-01-15 07:59:43.405493346 +0800
+@@ -5,6 +5,12 @@
+ 
+ SET(SOURCES ed25519.c edsign.c f25519.c fprime.c sha512.c main.c)
+ 
++find_path(UTILS_PATH libubox/utils.h
++	HINTS ${STAGING_DIR}/usr/include)
++IF(UTILS_PATH)
++INCLUDE_DIRECTORIES(${UTILS_PATH})
++ENDIF()
++
+ SET(LIBS)
+ IF(USE_LIBUBOX)
+   ADD_DEFINITIONS(-DUSE_LIBUBOX)

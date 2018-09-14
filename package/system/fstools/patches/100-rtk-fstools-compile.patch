@@ -1,0 +1,30 @@
+--- a/CMakeLists.txt	2016-01-14 14:32:08.000000000 +0800
++++ b/CMakeLists.txt	2016-01-15 08:10:32.076186605 +0800
+@@ -5,6 +5,12 @@
+ 
+ SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS "")
+ 
++find_path(LIST_PATH libubox/list.h
++	HINTS ${STAGING_DIR}/usr/include)
++IF(LIST_PATH)
++INCLUDE_DIRECTORIES(${LIST_PATH})
++ENDIF()
++
+ ADD_LIBRARY(fstools SHARED
+ 		libfstools/snapshot.c
+ 		libfstools/extroot.c
+@@ -50,12 +54,13 @@
+ TARGET_LINK_LIBRARIES(mount_root fstools)
+ INSTALL(TARGETS mount_root RUNTIME DESTINATION sbin)
+ 
++find_library(json NAMES json-c json)
+ ADD_EXECUTABLE(block block.c)
+ IF(DEFINED CMAKE_UBIFS_EXTROOT)
+ 	ADD_DEFINITIONS(-DUBIFS_EXTROOT)
+ 	TARGET_LINK_LIBRARIES(block blkid-tiny uci ubox blobmsg_json ubi-utils)
+ ELSE(DEFINED CMAKE_UBIFS_EXTROOT)
+-	TARGET_LINK_LIBRARIES(block blkid-tiny uci ubox blobmsg_json)
++	TARGET_LINK_LIBRARIES(block blkid-tiny uci ubox blobmsg_json ${json})
+ ENDIF(DEFINED CMAKE_UBIFS_EXTROOT)
+ INSTALL(TARGETS block RUNTIME DESTINATION sbin)
+ 

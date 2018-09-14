@@ -1,0 +1,11 @@
+--- a/configure.ac	2016-05-10 17:05:39.000000000 +0800
++++ b/configure.ac	2016-11-25 18:42:16.339317891 +0800
+@@ -471,7 +471,7 @@
+ ])
+ fi
+ 
+-LIBS="$INTLLIBS $LIBS"
++LIBS="$INTLLIBS $LIBS -ldl"
+ 
+ GETTEXT_PACKAGE=glib20
+ AC_SUBST(GETTEXT_PACKAGE)

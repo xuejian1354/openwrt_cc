@@ -1,0 +1,58 @@
+diff -Nur procd-2015-10-29.orig/initd/early.c procd-2015-10-29/initd/early.c
+--- procd-2015-10-29.orig/initd/early.c	2015-11-24 16:33:42.000000000 +0800
++++ procd-2015-10-29/initd/early.c	2015-12-19 16:08:19.236463128 +0800
+@@ -62,7 +62,7 @@
+ early_mounts(void)
+ {
+ 	unsigned int oldumask = umask(0);
+-
++#if 0
+ 	mount("proc", "/proc", "proc", MS_NOATIME | MS_NODEV | MS_NOEXEC | MS_NOSUID, 0);
+ 	mount("sysfs", "/sys", "sysfs", MS_NOATIME | MS_NODEV | MS_NOEXEC | MS_NOSUID, 0);
+ 	mount("cgroup", "/sys/fs/cgroup", "cgroup",  MS_NODEV | MS_NOEXEC | MS_NOSUID, 0);
+@@ -70,11 +70,15 @@
+ 	ignore(symlink("/tmp/shm", "/dev/shm"));
+ 	mkdir("/dev/pts", 0755);
+ 	mount("devpts", "/dev/pts", "devpts", MS_NOATIME | MS_NOEXEC | MS_NOSUID, "mode=600");
++#endif	
+ 	early_dev();
+ 
+ 	early_console("/dev/console");
++
+ 	if (mount_zram_on_tmp()) {
+-		mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOATIME, 0);
++		//1. tmp should be mounted via container conf file with rw right.
++		//2. so here mount should be commented to avoid mounting again.
++		//mount("tmpfs", "/tmp", "tmpfs", MS_NOSUID | MS_NODEV | MS_NOATIME, 0);
+ 		mkdir("/tmp/shm", 01777);
+ 	} else {
+ 		mkdir("/tmp/shm", 01777);
+@@ -84,6 +88,7 @@
+ 	mkdir("/tmp/run", 0777);
+ 	mkdir("/tmp/lock", 0777);
+ 	mkdir("/tmp/state", 0777);
++
+ 	umask(oldumask);
+ }
+ 
+diff -Nur procd-2015-10-29/plug/coldplug.c ../build_dir/target-i386_i486_glibc-2.21/procd-2015-10-29/plug/coldplug.c
+--- procd-2015-10-29/plug/coldplug.c	2015-11-24 16:33:42.000000000 +0800
++++ ../build_dir/target-i386_i486_glibc-2.21/procd-2015-10-29/plug/coldplug.c	2015-12-18 06:07:10.601283734 +0800
+@@ -41,8 +41,8 @@
+ void procd_coldplug(void)
+ {
+ 	char *argv[] = { "udevtrigger", NULL };
++#if 0
+ 	unsigned int oldumask = umask(0);
+-
+ 	umount2("/dev/pts", MNT_DETACH);
+ 	umount2("/dev/", MNT_DETACH);
+ 	mount("tmpfs", "/dev", "tmpfs", MS_NOSUID, "mode=0755,size=512K");
+@@ -50,6 +50,7 @@
+ 	mkdir("/dev/pts", 0755);
+ 	umask(oldumask);
+ 	mount("devpts", "/dev/pts", "devpts", MS_NOEXEC | MS_NOSUID, 0);
++#endif	
+ 	udevtrigger.cb = udevtrigger_complete;
+ 	udevtrigger.pid = fork();
+ 	if (!udevtrigger.pid) {

@@ -1,0 +1,88 @@
+--- a/libopkg/pkg.h	2016-09-27 10:38:23.228446893 +0800
++++ b/libopkg/pkg.h	2016-10-26 09:53:00.241071116 +0800
+@@ -156,7 +156,8 @@
+      char *self_data_uds;
+      char *use_data_uds;
+      unsigned int need_root;
+-	 unsigned int access_storage;
++     unsigned int need_gwvendor;
++     unsigned int access_storage;
+      unsigned int cpu_share;
+      unsigned int mem_limit;
+      unsigned int blkio_weight;
+--- a/libopkg/pkg.c	2016-09-27 10:38:23.232446893 +0800
++++ b/libopkg/pkg.c	2016-10-26 09:58:19.597078919 +0800
+@@ -101,8 +101,8 @@
+      pkg->self_interface_count = 0;
+      pkg->use_interface_str = NULL;
+      pkg->use_interface_count = 0;	 	
+-	 pkg->use_gwsys_path_str = NULL;
+-	 pkg->use_gwsys_path_count = 0;
++     pkg->use_gwsys_path_str = NULL;
++     pkg->use_gwsys_path_count = 0;
+      pkg->subscribe_event_str = NULL;
+      pkg->subscribe_event_count = 0;
+ 
+@@ -114,7 +114,8 @@
+      pkg->udp_ports_str = NULL;
+      pkg->udp_ports_count = 0;
+      pkg->need_root = 0;
+-	 pkg->access_storage = 0;
++     pkg->need_gwvendor = 0;
++     pkg->access_storage = 0;
+      pkg->self_data_uds = NULL;
+      pkg->use_data_uds = NULL;
+      pkg->cpu_share = 128;
+@@ -816,7 +817,11 @@
+               if (pkg->need_root) {
+                   fprintf(fp, "NeedRoot: %u\n", pkg->need_root);
+               } 
+-          }else {
++          } else if (strcasecmp(field, "NeedGWVendor") == 0) {
++              if (pkg->need_gwvendor) {
++                  fprintf(fp, "NeedGWVendor: %u\n", pkg->need_gwvendor);
++              }
++          } else {
+               goto UNKNOWN_FMT_FIELD;
+           }
+           break;
+@@ -1061,6 +1066,7 @@
+ 	pkg_formatted_field(fp, pkg, "KernelModules");
+ 	pkg_formatted_field(fp, pkg, "ProcRw");
+ 	pkg_formatted_field(fp, pkg, "NeedRoot");
++   pkg_formatted_field(fp, pkg, "NeedGWVendor");
+ 	pkg_formatted_field(fp, pkg, "AccessStorage");	
+ 	pkg_formatted_field(fp, pkg, "CpuShare");
+ 	pkg_formatted_field(fp, pkg, "MemoryLimit");
+@@ -1095,7 +1101,7 @@
+      pkg_formatted_field(file, pkg, "Capabilities");
+      pkg_formatted_field(file, pkg, "SelfInterface");
+      pkg_formatted_field(file, pkg, "UseInterface");
+-	 pkg_formatted_field(file, pkg, "UseGwSystemPath");
++     pkg_formatted_field(file, pkg, "UseGwSystemPath");
+      pkg_formatted_field(file, pkg, "SubscribeEvent");
+      pkg_formatted_field(file, pkg, "SelfDataUds");
+      pkg_formatted_field(file, pkg, "UseDataUds");
+@@ -1103,7 +1109,8 @@
+      pkg_formatted_field(file, pkg, "Vendor");
+      pkg_formatted_field(file, pkg, "ProcRw");
+      pkg_formatted_field(file, pkg, "NeedRoot");
+-	 pkg_formatted_field(file, pkg, "AccessStorage");
++     pkg_formatted_field(file, pkg, "NeedGWVendor");
++     pkg_formatted_field(file, pkg, "AccessStorage");
+      pkg_formatted_field(file, pkg, "CpuShare");
+      pkg_formatted_field(file, pkg, "MemoryLimit");
+      pkg_formatted_field(file, pkg, "BlkioWeight");
+--- a/libopkg/pkg_parse.c	2016-09-27 10:38:23.232446893 +0800
++++ b/libopkg/pkg_parse.c	2016-10-26 10:00:04.093081472 +0800
+@@ -230,6 +230,10 @@
+                    char *tmp = parse_simple("NeedRoot", line);
+                    pkg->need_root = strtoul(tmp, NULL, 0);
+                    free (tmp);
++               } else if (is_field("NeedGWVendor", line)) {
++                   char *tmp = parse_simple("NeedGWVendor", line);
++                   pkg->need_gwvendor = strtoul(tmp, NULL, 0);
++                   free (tmp);
+                }
+                break;
+ 	case 'P':

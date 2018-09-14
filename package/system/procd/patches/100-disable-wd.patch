@@ -1,0 +1,30 @@
+--- a/state.c	2016-05-04 21:32:04.393509925 +0800
++++ b/state.c	2016-05-06 20:15:46.113058003 +0800
+@@ -100,14 +100,14 @@
+ 	switch (state) {
+ 	case STATE_EARLY:
+ 		LOG("- early -\n");
+-		watchdog_init(0);
++		//watchdog_init(0);
+ 		//hotplug("/etc/hotplug.json");
+ 		procd_coldplug();
+ 		break;
+ 
+ 	case STATE_UBUS:
+ 		// try to reopen incase the wdt was not available before coldplug
+-		watchdog_init(0);
++		//watchdog_init(0);
+ 		set_stdio("console");
+ 		LOG("- ubus -\n");
+ 		procd_connect_ubus();
+--- a/initd/init.c	2015-11-24 16:33:42.000000000 +0800
++++ b/initd/init.c	2016-05-06 20:21:05.706385979 +0800
+@@ -80,7 +80,7 @@
+ 
+ 	early();
+ 	cmdline();
+-	watchdog_init(1);
++	//watchdog_init(1);
+ 
+ 	pid = fork();
+ 	if (!pid) {

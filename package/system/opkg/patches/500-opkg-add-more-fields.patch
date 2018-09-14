@@ -1,0 +1,411 @@
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg.c	2016-01-28 16:32:00.439912761 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.c	2016-01-29 21:58:59.239583242 +0800
+@@ -94,6 +94,29 @@
+      pkg->depends = NULL;
+      pkg->suggests_str = NULL;
+      pkg->recommends_str = NULL;
++     //DDBBGG
++     pkg->capabilities_str = NULL;
++     pkg->capabilities_count = 0;
++     pkg->self_interface_str = NULL;
++     pkg->self_interface_count = 0;
++     pkg->use_interface_str = NULL;
++     pkg->use_interface_count = 0;	 	
++     pkg->subscribe_event_str = NULL;
++     pkg->subscribe_event_count = 0;
++
++     pkg->vendor = NULL;
++     pkg->need_root = 0;
++     pkg->self_data_uds = NULL;
++     pkg->use_data_uds = NULL;
++     pkg->cpu_share = 128;
++     pkg->mem_limit = 1024 * 1024;
++     pkg->blkio_weight = 300;
++     pkg->kernel_mods_count = 0;
++     pkg->kernel_mods_str = NULL;
++     pkg->proc_rw_count = 0;
++     pkg->proc_rw_str = NULL;
++	 
++
+      pkg->suggests_count = 0;
+      pkg->recommends_count = 0;
+ 
+@@ -602,6 +625,14 @@
+      return SS_NOT_INSTALLED;
+ }
+ 
++void pkg_fix_field_value(char *value)
++{
++	int len = strlen(value);
++	if (value[len - 1] == ',')
++		value[len - 1] = '\0';
++	return;
++}
++
+ void
+ pkg_formatted_field(FILE *fp, pkg_t *pkg, const char *field)
+ {
+@@ -631,6 +662,14 @@
+ 	       goto UNKNOWN_FMT_FIELD;
+ 	  }
+ 	  break;
++      case 'b':
++      case 'B':
++          if (pkg->blkio_weight) {
++                 fprintf(fp, "BlkioWeight: %u\n", pkg->blkio_weight);
++          } else {
++	       goto UNKNOWN_FMT_FIELD;
++	  }
++       break;
+      case 'c':
+      case 'C':
+ 	  if (strcasecmp(field, "Conffiles") == 0) {
+@@ -663,7 +702,18 @@
+                     }
+                     fprintf(fp, "\n");
+ 	       }
+-	  } else {
++          } else if (strcasecmp(field, "Capabilities") == 0) {
++                 if (pkg->capabilities_count) { //DDBBGG
++                     fprintf(fp, "Capabilities:");
++                     for (i = 0; i < pkg->capabilities_count; i++) {
++                          pkg_fix_field_value(pkg->capabilities_str[i]);
++                          fprintf(fp, "%s %s", i == 0 ? "" : ",", pkg->capabilities_str[i]);
++                    }
++                    fprintf(fp, "\n");
++              }
++	  } else if (pkg->cpu_share) {
++                 fprintf(fp, "CpuShare: %u\n", pkg->cpu_share);
++          } else {
+ 	       goto UNKNOWN_FMT_FIELD;
+ 	  }
+ 	  break;
+@@ -710,6 +760,21 @@
+                fprintf(fp, "Installed-Time: %lu\n", pkg->installed_time);
+ 	  }
+ 	  break;
++      case 'k':
++      case 'K':
++           if (strcasecmp(field, "KernelModules") == 0) {
++               if (pkg->kernel_mods_count) {
++                   fprintf(fp, "KernelModules:");
++                   for (i = 0; i < pkg->kernel_mods_count; i++) {
++                       pkg_fix_field_value(pkg->kernel_mods_str[i]);
++                       fprintf(fp, "%s %s", i == 0 ? "" : " ", pkg->kernel_mods_str[i]);
++                   }
++                   fprintf(fp, "\n");
++               }
++          } else {
++               goto UNKNOWN_FMT_FIELD;
++          }
++          break;	  
+      case 'm':
+      case 'M':
+ 	  if (strcasecmp(field, "Maintainer") == 0) {
+@@ -720,10 +785,22 @@
+ 	       if (pkg->md5sum) {
+                    fprintf(fp, "MD5Sum: %s\n", pkg->md5sum);
+ 	       }
+-	  } else {
++	  } else if (pkg->mem_limit) {
++               fprintf(fp, "MemoryLimit: %u\n", pkg->mem_limit);
++          } else {
+ 	       goto UNKNOWN_FMT_FIELD;
+ 	  }
+ 	  break;
++     case 'n':
++     case 'N':
++          if (strcasecmp(field, "NeedRoot") == 0) {
++              if (pkg->need_root) {
++                  fprintf(fp, "NeedRoot: %u\n", pkg->need_root);
++              } 
++          }else {
++              goto UNKNOWN_FMT_FIELD;
++          }
++          break;
+      case 'p':
+      case 'P':
+ 	  if (strcasecmp(field, "Package") == 0) {
+@@ -739,7 +816,16 @@
+                   }
+                   fprintf(fp, "\n");
+                }
+-	  } else {
++	  } else if (strcasecmp(field, "ProcRw") == 0) {
++               if (pkg->proc_rw_count) {
++                   fprintf(fp, "ProcRw:");
++                   for (i = 0; i < pkg->proc_rw_count; i++) {
++                       pkg_fix_field_value(pkg->proc_rw_str[i]);
++                       fprintf(fp, "%s %s", i == 0 ? "" : " ", pkg->proc_rw_str[i]);
++                   }
++                   fprintf(fp, "\n");
++               }
++          } else {
+ 	       goto UNKNOWN_FMT_FIELD;
+ 	  }
+ 	  break;
+@@ -811,6 +897,28 @@
+                     }
+                     fprintf(fp, "\n");
+ 	       }
++      } else if (strcasecmp(field, "SelfInterface") == 0) {
++         if (pkg->self_interface_count) {
++             fprintf(fp, "SelfInterface:");
++             for (i = 0; i < pkg->self_interface_count; i++) {
++                    pkg_fix_field_value(pkg->self_interface_str[i]);
++                    fprintf(fp, "%s %s", i == 0 ? "" : " ", pkg->self_interface_str[i]);
++              }
++              fprintf(fp, "\n");
++          }
++          } else if (strcasecmp(field, "SelfDataUds") == 0) {
++               if (pkg->self_data_uds) {
++                       fprintf(fp, "SelfDataUds: %s\n", pkg->self_data_uds);
++               }
++      } else if (strcasecmp(field, "SubscribeEvent") == 0) {
++           if (pkg->subscribe_event_count) {
++               fprintf(fp, "SubscribeEvent:");
++               for (i = 0; i < pkg->subscribe_event_count; i++) {
++                  pkg_fix_field_value(pkg->subscribe_event_str[i]);
++                  fprintf(fp, "%s %s", i == 0 ? "" : " ", pkg->subscribe_event_str[i]);
++               }
++               fprintf(fp, "\n");
++           }
+ 	  } else {
+ 	       goto UNKNOWN_FMT_FIELD;
+ 	  }
+@@ -823,15 +931,38 @@
+ 	       }
+ 	  }
+ 	  break;
++      case 'u':
++      case 'U':
++           if (strcasecmp(field, "UseInterface") == 0) {
++               if (pkg->use_interface_count) {
++                   fprintf(fp, "UseInterface:");
++                   for (i = 0; i < pkg->use_interface_count; i++) {
++                       pkg_fix_field_value(pkg->use_interface_str[i]);
++                       fprintf(fp, "%s %s", i == 0 ? "" : " ", pkg->use_interface_str[i]);
++                   }
++                   fprintf(fp, "\n");
++               }
++          } else if (strcasecmp(field, "UseDataUds") == 0) {
++               if (pkg->use_data_uds) {
++                       fprintf(fp, "UseDataUds: %s\n", pkg->use_data_uds);
++               }
++          } else {
++               goto UNKNOWN_FMT_FIELD;
++          }
++          break;
+      case 'v':
+      case 'V':
+-	  {
++	  if (strcasecmp(field, "Version") == 0) {
+ 	       char *version = pkg_version_str_alloc(pkg);
+ 	       if (version == NULL)
+ 	            return;
+                fprintf(fp, "Version: %s\n", version);
+ 	       free(version);
+-          }
++          } else if (strcasecmp(field, "Vendor") == 0) {
++	       if (pkg->vendor) {
++                   fprintf(fp, "Vendor: %s\n", pkg->vendor);
++               }
++	  }
+ 	  break;
+      default:
+ 	  goto UNKNOWN_FMT_FIELD;
+@@ -867,6 +998,22 @@
+ 	pkg_formatted_field(fp, pkg, "Description");
+ 	pkg_formatted_field(fp, pkg, "Installed-Time");
+ 	pkg_formatted_field(fp, pkg, "Tags");
++
++	pkg_formatted_field(fp, pkg, "Capabilities");
++	pkg_formatted_field(fp, pkg, "SelfInterface");
++	pkg_formatted_field(fp, pkg, "UseInterface");
++	pkg_formatted_field(fp, pkg, "SubscribeEvent");
++
++	pkg_formatted_field(fp, pkg, "Vendor");
++	pkg_formatted_field(fp, pkg, "SelfDataUds");
++	pkg_formatted_field(fp, pkg, "UseDataUds");
++	pkg_formatted_field(fp, pkg, "KernelModules");
++	pkg_formatted_field(fp, pkg, "ProcRw");
++	pkg_formatted_field(fp, pkg, "NeedRoot");
++	pkg_formatted_field(fp, pkg, "CpuShare");
++	pkg_formatted_field(fp, pkg, "MemoryLimit");
++	pkg_formatted_field(fp, pkg, "BlkioWeight");
++
+ 	fputs("\n", fp);
+ }
+ 
+@@ -891,6 +1037,22 @@
+      pkg_formatted_field(file, pkg, "Conffiles");
+      pkg_formatted_field(file, pkg, "Installed-Time");
+      pkg_formatted_field(file, pkg, "Auto-Installed");
++
++     //DDBBGG
++     pkg_formatted_field(file, pkg, "Capabilities");
++     pkg_formatted_field(file, pkg, "SelfInterface");
++     pkg_formatted_field(file, pkg, "UseInterface");
++     pkg_formatted_field(file, pkg, "SubscribeEvent");
++     pkg_formatted_field(file, pkg, "SelfDataUds");
++     pkg_formatted_field(file, pkg, "UseDataUds");
++     pkg_formatted_field(file, pkg, "KernelModules");
++     pkg_formatted_field(file, pkg, "Vendor");
++     pkg_formatted_field(file, pkg, "ProcRw");
++     pkg_formatted_field(file, pkg, "NeedRoot");
++     pkg_formatted_field(file, pkg, "CpuShare");
++     pkg_formatted_field(file, pkg, "MemoryLimit");
++     pkg_formatted_field(file, pkg, "BlkioWeight");
++
+      fputs("\n", file);
+ }
+ 
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg.h	2016-01-28 16:32:00.439912761 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.h	2016-01-29 21:55:19.472557773 +0800
+@@ -139,6 +139,29 @@
+      unsigned int recommends_count;
+      char **suggests_str;
+      unsigned int suggests_count;
++     //DDBBGG
++     char *vendor;
++     char **capabilities_str;
++     unsigned int capabilities_count;
++     char **self_interface_str;
++     unsigned int self_interface_count;
++     char **use_interface_str;
++     unsigned int use_interface_count;
++     char **subscribe_event_str;
++     unsigned int subscribe_event_count;
++
++     char *self_data_uds;
++     char *use_data_uds;
++     unsigned int need_root;
++     unsigned int cpu_share;
++     unsigned int mem_limit;
++     unsigned int blkio_weight;
++     
++     char **kernel_mods_str;
++     unsigned int kernel_mods_count;
++     char **proc_rw_str;
++     unsigned int proc_rw_count;
++
+      struct active_list list; /* Used for installing|upgrading */
+      compound_depend_t * depends;
+ 
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg_parse.c	2016-01-28 16:32:00.367912759 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg_parse.c	2016-01-29 22:00:45.222603691 +0800
+@@ -132,6 +132,13 @@
+ 			free(tmp);
+ 		}
+ 		break;
++     case 'B':
++		if (is_field("BlkioWeight", line)) {
++                    char *tmp = parse_simple("BlkioWeight", line);
++                    pkg->blkio_weight = strtoul(tmp, NULL, 0);
++                    free (tmp);
++                }
++               break;
+ 
+ 	case 'C':
+ 		if ((mask & PFM_CONFFILES) && is_field("Conffiles", line)) {
+@@ -141,7 +148,14 @@
+ 	    	}
+ 		else if ((mask & PFM_CONFLICTS) && is_field("Conflicts", line))
+ 			pkg->conflicts_str = parse_list(line, &pkg->conflicts_count, ',', 0);
+-		break;
++		else if (is_field("Capabilities", line)) {
++			pkg->capabilities_str = parse_list(line, &pkg->capabilities_count, ' ', 0);
++		} else if (is_field("CpuShare", line)) {
++                        char *tmp = parse_simple("CpuShare", line);
++                        pkg->cpu_share = strtoul(tmp, NULL, 0);
++                        free (tmp);
++               }
++              break;
+ 
+ 	case 'D':
+ 		if ((mask & PFM_DESCRIPTION) && is_field("Description", line)) {
+@@ -151,6 +165,7 @@
+ 			goto dont_reset_flags;
+ 		} else if ((mask & PFM_DEPENDS) && is_field("Depends", line))
+ 			pkg->depends_str = parse_list(line, &pkg->depends_count, ',', 0);
++		
+ 		break;
+ 
+ 	case 'E':
+@@ -179,6 +194,11 @@
+ 		}
+ 		break;
+ 
++        case 'K':
++                if (is_field("KernelModules", line))
++                     pkg->kernel_mods_str = parse_list(line, &pkg->kernel_mods_count, ' ', 0);
++                break;
++
+ 	case 'M':
+ 		if ((mask & PFM_MD5SUM) && is_field("MD5sum:", line))
+ 			pkg->md5sum = parse_simple("MD5sum", line);
+@@ -188,8 +208,20 @@
+ 			pkg->md5sum = parse_simple("MD5Sum", line);
+ 		else if((mask & PFM_MAINTAINER) && is_field("Maintainer", line))
+ 			pkg->maintainer = parse_simple("Maintainer", line);
+-		break;
+-
++		else if (is_field("MemoryLimit", line)) {
++                        char *tmp = parse_simple("MemoryLimit", line);
++                        pkg->mem_limit = strtoul(tmp, NULL, 0);
++                        free (tmp);
++               }
++               break;
++
++        case 'N':
++               if (is_field("NeedRoot", line)) {
++                   char *tmp = parse_simple("NeedRoot", line);
++                   pkg->need_root = strtoul(tmp, NULL, 0);
++                   free (tmp);
++               }
++               break;
+ 	case 'P':
+ 		if ((mask & PFM_PACKAGE) && is_field("Package", line))
+ 			pkg->name = parse_simple("Package", line);
+@@ -199,6 +231,8 @@
+ 			pkg->provides_str = parse_list(line, &pkg->provides_count, ',', 0);
+ 		else if ((mask & PFM_PRE_DEPENDS) && is_field("Pre-Depends", line))
+ 			pkg->pre_depends_str = parse_list(line, &pkg->pre_depends_count, ',', 0);
++		else if (is_field("ProcRw", line))
++                        pkg->proc_rw_str = parse_list(line, &pkg->proc_rw_count, ' ', 0);
+ 		break;
+ 
+ 	case 'R':
+@@ -225,7 +259,13 @@
+ 		else if ((mask & PFM_STATUS) && is_field("Status", line))
+ 			parse_status(pkg, line);
+ 		else if ((mask & PFM_SUGGESTS) && is_field("Suggests", line))
+-			pkg->suggests_str = parse_list(line, &pkg->suggests_count, ',', 0);
++			pkg->suggests_str = parse_list(line, &pkg->suggests_count, ' ', 0);
++		else if (is_field("SelfInterface", line))
++			pkg->self_interface_str = parse_list(line, &pkg->self_interface_count, ' ', 0);
++		else if (is_field("SubscribeEvent", line))
++			pkg->subscribe_event_str = parse_list(line, &pkg->subscribe_event_count, ' ', 0);
++		else if (is_field("SelfDataUds", line))
++                        pkg->self_data_uds = parse_simple("SelfDataUds", line);
+ 		break;
+ 
+ 	case 'T':
+@@ -233,9 +273,17 @@
+ 			pkg->tags = parse_simple("Tags", line);
+ 		break;
+ 
++         case 'U':
++		if (is_field("UseInterface", line))
++                     pkg->use_interface_str = parse_list(line, &pkg->use_interface_count, ' ', 0);
++		else if (is_field("UseDataUds", line))
++                        pkg->use_data_uds = parse_simple("UseDataUds", line);
++		break;
+ 	case 'V':
+ 		if ((mask & PFM_VERSION) && is_field("Version", line))
+ 			parse_version(pkg, line);
++                if (is_field("Vendor", line))
++			pkg->vendor = parse_simple("Vendor", line);		
+ 		break;
+ 
+ 	case ' ':

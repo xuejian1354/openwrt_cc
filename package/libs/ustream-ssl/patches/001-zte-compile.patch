@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt	2015-12-07 20:22:57.000000000 +0800
++++ b/CMakeLists.txt	2016-04-20 16:39:32.754928290 +0800
+@@ -24,6 +24,10 @@
+   SET(SSL_LIB crypto ssl)
+ ENDIF()
+ 
++find_path(USTREAM_PATH libubox/ustream.h
++	HINTS ${STAGING_DIR}/usr/include)
++INCLUDE_DIRECTORIES(${USTREAM_PATH})
++
+ ADD_LIBRARY(ustream-ssl SHARED ustream-ssl.c ${SSL_SRC})
+ TARGET_LINK_LIBRARIES(ustream-ssl ubox ${SSL_LIB})
+ 

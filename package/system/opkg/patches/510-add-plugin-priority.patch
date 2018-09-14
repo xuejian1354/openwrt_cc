@@ -1,0 +1,49 @@
+Index: opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.h
+===================================================================
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg.h	2017-04-19 13:45:28.643496625 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.h	2017-04-19 13:45:28.639496624 +0800
+@@ -161,6 +161,7 @@
+      unsigned int mem_limit;
+      unsigned int blkio_weight;
+      unsigned int max_storage_size;
++     char *plugin_priority;
+      
+      char **kernel_mods_str;
+      unsigned int kernel_mods_count;
+Index: opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.c
+===================================================================
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg.c	2017-04-19 13:45:28.643496625 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.c	2017-04-19 13:46:27.323498058 +0800
+@@ -108,6 +108,7 @@
+ 
+      pkg->vendor = NULL;
+      pkg->dbus_version = NULL;
++     pkg->plugin_priority = NULL;
+      pkg->need_root = 0;
+ 	 pkg->access_storage = 0;
+      pkg->self_data_uds = NULL;
+@@ -821,7 +822,10 @@
+                fprintf(fp, "Package: %s\n", pkg->name);
+ 	  } else if (strcasecmp(field, "Priority") == 0) {
+                fprintf(fp, "Priority: %s\n", pkg->priority);
+-	  } else if (strcasecmp(field, "Provides") == 0) {
++	  } else if (strcasecmp(field, "PluginPriority") == 0) {
++               if (pkg->plugin_priority)
++               fprintf(fp, "PluginPriority: %s\n", pkg->plugin_priority);
++          } else if (strcasecmp(field, "Provides") == 0) {
+ 	       if (pkg->provides_count > 1) {
+                   fprintf(fp, "Provides:");
+ 		  for(i = 1; i < pkg->provides_count; i++) {
+Index: opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg_parse.c
+===================================================================
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg_parse.c	2017-04-19 13:45:28.643496625 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg_parse.c	2017-04-19 13:45:28.639496624 +0800
+@@ -243,6 +243,8 @@
+ 			pkg->pre_depends_str = parse_list(line, &pkg->pre_depends_count, ',', 0);
+ 		else if (is_field("ProcRw", line))
+                         pkg->proc_rw_str = parse_list(line, &pkg->proc_rw_count, ' ', 0);
++                else if (is_field("PluginPriority", line))
++                        pkg->plugin_priority = parse_simple("PluginPriority", line);
+ 		break;
+ 
+ 	case 'R':

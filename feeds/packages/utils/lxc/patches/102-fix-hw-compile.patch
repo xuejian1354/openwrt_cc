@@ -1,0 +1,11 @@
+--- a/src/lxc/attach.c	2016-03-20 06:05:57.835739894 +0800
++++ b/src/lxc/attach.c	2016-03-20 06:04:27.427741115 +0800
+@@ -34,7 +34,7 @@
+ #include <sys/prctl.h>
+ #include <sys/mount.h>
+ #include <sys/socket.h>
+-#include <sys/syscall.h>
++//#include <sys/syscall.h>
+ #include <sys/wait.h>
+ #include <linux/unistd.h>
+ #include <pwd.h>

@@ -1,0 +1,114 @@
+Index: opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.h
+===================================================================
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg.h	2017-03-23 14:09:38.528731662 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.h	2017-03-23 14:09:38.528731662 +0800
+@@ -160,6 +160,8 @@
+      unsigned int access_storage;
+      unsigned int cpu_share;
+      unsigned int mem_limit;
++     unsigned int nfile;
++     unsigned int nproc;
+      unsigned int blkio_weight;
+      unsigned int max_storage_size;
+      char *plugin_priority;
+Index: opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.c
+===================================================================
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg.c	2017-03-23 14:09:38.528731662 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.c	2017-03-23 14:12:00.108730920 +0800
+@@ -120,6 +120,7 @@
+      pkg->use_data_uds = NULL;
+      pkg->cpu_share = 128;
+      pkg->mem_limit = 1024 * 1024;
++     pkg->nproc = pkg->nfile = 0;
+      pkg->max_storage_size = 0;
+      pkg->blkio_weight = 300;
+      pkg->kernel_mods_count = 0;
+@@ -803,10 +804,18 @@
+ 	       if (pkg->md5sum) {
+                    fprintf(fp, "MD5Sum: %s\n", pkg->md5sum);
+ 	       }
+-	  } else if (pkg->mem_limit) {
+-               fprintf(fp, "MemoryLimit: %u\n", pkg->mem_limit);
+-          } else if (pkg->max_storage_size) {
+-               fprintf(fp, "MaxStorageSize: %u\n", pkg->max_storage_size);
++	  } else if (strcasecmp(field, "MemoryLimit") == 0) {
++               if (pkg->mem_limit)
++                    fprintf(fp, "MemoryLimit: %u\n", pkg->mem_limit);
++          } else if (strcasecmp(field, "MaxStorageSize") == 0) {
++               if (pkg->max_storage_size)
++                    fprintf(fp, "MaxStorageSize: %u\n", pkg->max_storage_size);
++          } else if (strcasecmp(field, "MaxFileNum") == 0) {
++              if (pkg->nfile)
++                   fprintf(fp, "MaxFileNum: %u\n", pkg->nfile);
++          } else if (strcasecmp(field, "MaxProcNum") == 0) {
++              if (pkg->nproc)
++                   fprintf(fp, "MaxProcNum: %u\n", pkg->nproc);              
+           } else {
+ 	       goto UNKNOWN_FMT_FIELD;
+ 	  }
+@@ -1066,11 +1075,17 @@
+ 	pkg_formatted_field(fp, pkg, "KernelModules");
+ 	pkg_formatted_field(fp, pkg, "ProcRw");
+ 	pkg_formatted_field(fp, pkg, "NeedRoot");
+-   pkg_formatted_field(fp, pkg, "NeedGWVendor");
++        pkg_formatted_field(fp, pkg, "NeedGWVendor");
++        pkg_formatted_field(fp, pkg, "MaxProcNum");
++        pkg_formatted_field(fp, pkg, "MaxFileNum");
+ 	pkg_formatted_field(fp, pkg, "AccessStorage");	
+ 	pkg_formatted_field(fp, pkg, "CpuShare");
+ 	pkg_formatted_field(fp, pkg, "MemoryLimit");
+ 	pkg_formatted_field(fp, pkg, "BlkioWeight");
++        pkg_formatted_field(fp, pkg, "PluginPriority");
++        pkg_formatted_field(fp, pkg, "MaxStorageSize");
++        pkg_formatted_field(fp, pkg, "UdpPorts");
++        pkg_formatted_field(fp, pkg, "TcpPorts");
+ 
+ 	fputs("\n", fp);
+ }
+@@ -1111,9 +1126,16 @@
+      pkg_formatted_field(file, pkg, "NeedRoot");
+      pkg_formatted_field(file, pkg, "NeedGWVendor");
+      pkg_formatted_field(file, pkg, "AccessStorage");
++     pkg_formatted_field(file, pkg, "MaxProcNum");               
++     pkg_formatted_field(file, pkg, "MaxFileNum");
+      pkg_formatted_field(file, pkg, "CpuShare");
+      pkg_formatted_field(file, pkg, "MemoryLimit");
+      pkg_formatted_field(file, pkg, "BlkioWeight");
++     pkg_formatted_field(file, pkg, "PluginPriority");
++     pkg_formatted_field(file, pkg, "MaxStorageSize");
++     pkg_formatted_field(file, pkg, "UdpPorts");
++     pkg_formatted_field(file, pkg, "TcpPorts");
++
+ 
+      fputs("\n", file);
+ }
+Index: opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg_parse.c
+===================================================================
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg_parse.c	2017-03-23 14:09:38.528731662 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg_parse.c	2017-03-23 14:09:38.528731662 +0800
+@@ -222,7 +222,15 @@
+                         char *tmp = parse_simple("MaxStorageSize", line);
+                         pkg->max_storage_size = strtoul(tmp, NULL, 0);
+                         free (tmp);
+-               }
++               } else if (is_field("MaxFileNum", line)) {           
++                       char *tmp = parse_simple("MaxFileNum", line);
++                       pkg->nfile = strtoul(tmp, NULL, 0);
++                       free (tmp);
++               } else if (is_field("MaxProcNum", line)) {
++                       char *tmp = parse_simple("MaxProcNum", line);
++                       pkg->nproc = strtoul(tmp, NULL, 0);
++                       free (tmp);
++               } 
+                break;
+ 
+         case 'N':
+@@ -235,6 +243,8 @@
+                    pkg->need_gwvendor = strtoul(tmp, NULL, 0);
+                    free (tmp);
+                }
++
++
+                break;
+ 	case 'P':
+ 		if ((mask & PFM_PACKAGE) && is_field("Package", line))

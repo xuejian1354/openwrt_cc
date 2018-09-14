@@ -1,0 +1,42 @@
+--- a/libopkg/pkg.h	2016-07-27 09:54:48.552937241 +0800
++++ b/libopkg/pkg.h	2016-08-10 13:08:31.502179591 +0800
+@@ -160,6 +160,7 @@
+      unsigned int cpu_share;
+      unsigned int mem_limit;
+      unsigned int blkio_weight;
++     unsigned int max_storage_size;
+      
+      char **kernel_mods_str;
+      unsigned int kernel_mods_count;
+--- a/libopkg/pkg.c	2016-07-27 09:54:48.552937241 +0800
++++ b/libopkg/pkg.c	2016-08-10 13:11:46.186184348 +0800
+@@ -114,6 +114,7 @@
+      pkg->use_data_uds = NULL;
+      pkg->cpu_share = 128;
+      pkg->mem_limit = 1024 * 1024;
++     pkg->max_storage_size = 0;
+      pkg->blkio_weight = 300;
+      pkg->kernel_mods_count = 0;
+      pkg->kernel_mods_str = NULL;
+@@ -798,6 +799,8 @@
+ 	       }
+ 	  } else if (pkg->mem_limit) {
+                fprintf(fp, "MemoryLimit: %u\n", pkg->mem_limit);
++          } else if (pkg->max_storage_size) {
++               fprintf(fp, "MaxStorageSize: %u\n", pkg->max_storage_size);
+           } else {
+ 	       goto UNKNOWN_FMT_FIELD;
+ 	  }
+--- a/libopkg/pkg_parse.c	2016-07-27 09:54:48.552937241 +0800
++++ b/libopkg/pkg_parse.c	2016-08-10 13:13:05.838186294 +0800
+@@ -218,6 +218,10 @@
+                         char *tmp = parse_simple("MemoryLimit", line);
+                         pkg->mem_limit = strtoul(tmp, NULL, 0);
+                         free (tmp);
++               } else if (is_field("MaxStorageSize", line)) {
++                        char *tmp = parse_simple("MaxStorageSize", line);
++                        pkg->max_storage_size = strtoul(tmp, NULL, 0);
++                        free (tmp);
+                }
+                break;
+ 

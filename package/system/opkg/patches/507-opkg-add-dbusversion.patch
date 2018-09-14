@@ -1,0 +1,58 @@
+Index: opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.h
+===================================================================
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg.h	2017-04-19 12:14:27.355363190 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.h	2017-04-19 12:14:27.299363189 +0800
+@@ -121,6 +121,7 @@
+      unsigned long epoch;
+      char *version;
+      char *revision;
++     char *dbus_version;
+      pkg_src_t *src;
+      pkg_dest_t *dest;
+      char *architecture;
+Index: opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.c
+===================================================================
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg.c	2017-04-19 12:14:27.355363190 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg.c	2017-04-19 12:16:12.187365751 +0800
+@@ -107,6 +107,7 @@
+      pkg->subscribe_event_count = 0;
+ 
+      pkg->vendor = NULL;
++     pkg->dbus_version = NULL;
+      pkg->need_root = 0;
+ 	 pkg->access_storage = 0;
+      pkg->self_data_uds = NULL;
+@@ -742,7 +743,11 @@
+ 	       if (pkg->description) {
+                    fprintf(fp, "Description: %s\n", pkg->description);
+ 	       }
+-	  } else {
++	  } else if (strcasecmp(field, "DbusVersion") == 0) {
++               if (pkg->dbus_version) {
++                   fprintf(fp, "DbusVersion: %s\n", pkg->dbus_version);
++               }
++          } else {
+ 	       goto UNKNOWN_FMT_FIELD;
+ 	  }
+           break;
+@@ -1057,6 +1062,7 @@
+      pkg_formatted_field(file, pkg, "Auto-Installed");
+ 
+      //DDBBGG
++     pkg_formatted_field(file, pkg, "DbusVersion");
+      pkg_formatted_field(file, pkg, "Capabilities");
+      pkg_formatted_field(file, pkg, "SelfInterface");
+      pkg_formatted_field(file, pkg, "UseInterface");
+Index: opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg_parse.c
+===================================================================
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/pkg_parse.c	2017-04-19 12:14:27.355363190 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/pkg_parse.c	2017-04-19 12:14:27.355363190 +0800
+@@ -169,6 +169,8 @@
+ 			goto dont_reset_flags;
+ 		} else if ((mask & PFM_DEPENDS) && is_field("Depends", line))
+ 			pkg->depends_str = parse_list(line, &pkg->depends_count, ',', 0);
++		else if (is_field("DbusVersion", line))
++			pkg->dbus_version = parse_simple("DbusVersion", line);
+ 		
+ 		break;
+ 
