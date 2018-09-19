@@ -54,12 +54,18 @@ define Package/$(PKG_NAME)/description
    Test Application for smart gateway device
 endef
 
-define Package/$(PKG_NAME)/config
-	config TESTAPP_WITH_ARCH
-		string "Configuration arch"
-		default ""
-		depends on PACKAGE_$(PKG_NAME)
-endef
+#define Package/$(PKG_NAME)/config
+#	config TESTAPP_WITH_ARCH
+#		string "Configuration arch"
+#		default ""
+#		depends on PACKAGE_$(PKG_NAME)
+#endef
+
+ifeq ($(CONFIG_TARGET_rtl9600_rtl9600),y)
+CONFIG_TESTAPP_WITH_ARCH:=mips-rsdk
+else ifeq ($(CONFIG_TARGET_sd5116_sd5116),y)
+CONFIG_TESTAPP_WITH_ARCH:=arm-a91e
+endif
 
 # make the submake silent:
 ifeq ($(QUIET),1)
