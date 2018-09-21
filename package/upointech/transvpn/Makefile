@@ -64,7 +64,7 @@ endef
 ifeq ($(CONFIG_TARGET_rtl9600_rtl9600),y)
 CONFIG_TESTAPP_WITH_ARCH:=mips-rsdk
 else ifeq ($(CONFIG_TARGET_sd5116_sd5116),y)
-CONFIG_TESTAPP_WITH_ARCH:=arm-a91e
+CONFIG_TESTAPP_WITH_ARCH:=arm-a9le
 endif
 
 # make the submake silent:
