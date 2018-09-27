@@ -35,7 +35,7 @@ static GDBusNodeInfo *introspection_config_data = NULL;
 static gchar *_global_title = NULL;
 GMainLoop *loop;
 
-char *uds_file = "/uds/transvpn/transvpn.uds";
+char *uds_file = "/uds/testvpn/testvpn.uds";
 
 static void uds_cb(struct ustream *s, int bytes)
 {
@@ -67,7 +67,7 @@ struct ustream_fd uds = {
 /* Introspection data for the service we are exporting */
 static const gchar introspection_xml[] =
 	"<node>"
-	"  <interface name='com.upointech.transvpn1.intf1'>"
+	"  <interface name='com.upointech.testvpn1.intf1'>"
 	"    <method name='Stop'>"
 	"	 <arg type='u' name='response' direction='out'/>"
 	"    </method>"
@@ -79,7 +79,7 @@ static const gchar introspection_xml[] =
 
 static const gchar introspection_xml2[] =
 	"<node>"
-	"  <interface name='com.upointech.transvpn1.intf2'>"
+	"  <interface name='com.upointech.testvpn1.intf2'>"
 	"    <method name='Config'>"
 	"      <arg type='s' name='name' direction='in'/>"
 	"	 <arg type='i' name='response' direction='out'/>"
@@ -149,22 +149,6 @@ handle_method_call(GDBusConnection       *connection,
 		g_dbus_method_invocation_return_value(invocation, g_variant_new("(s)", name));
 	} else if (g_strcmp0(method_name, "Func2") == 0) {
 		gchar *response = "Byebye2";
-#if 1		
-		//printf("%d, touch /tmp/transvpn\n", __LINE__);
-		//system("touch /tmp/transvpn");
-		//system("touch .uci/transvpn");
-		//printf("%d, cat /etc/config/network\n", __LINE__);
-		//system("cat /etc/config/network");
-		//system("touch etc/config/transvpn");
-		//printf("%d, uci add\n", __LINE__);
-		system("uci add transvpn sec1");
-		//printf("%d, uci rename\n", __LINE__);
-		system("uci rename transvpn.@sec1[0]=name1");
-		//printf("%d, uci set\n", __LINE__);
-		system("uci set transvpn.@sec1[0].key1=val1");
-		//printf("%d, uci commit\n", __LINE__);
-		system("uci commit transvpn");
-#endif
 		g_dbus_method_invocation_return_value(invocation, g_variant_new("(s)", response));
 	}
 }
@@ -293,7 +277,7 @@ config_global_handle_method_call(GDBusConnection       *connection,
 
 		result = g_dbus_proxy_call_sync(proxy,
 										"ReadOption",
-										g_variant_new("(sss)", "transvpn", "global", key),
+										g_variant_new("(sss)", "testvpn", "global", key),
 										G_DBUS_CALL_FLAGS_NONE,
 										-1,
 										NULL,
@@ -312,7 +296,7 @@ config_global_handle_method_call(GDBusConnection       *connection,
 
 		result = g_dbus_proxy_call_sync(proxy,
 										"WriteOption",
-										g_variant_new("(ssss)", "transvpn", "global", key, value),
+										g_variant_new("(ssss)", "testvpn", "global", key, value),
 										G_DBUS_CALL_FLAGS_NONE,
 										-1,
 										NULL,
@@ -339,7 +323,7 @@ on_bus_acquired(GDBusConnection *connection,
 	CtSgwLog(LOG_NOTICE, "%s: registering dbus object.", __func__);
 	
 	registration_id = g_dbus_connection_register_object(connection,
-					  "/com/upointech/transvpn1",
+					  "/com/upointech/testvpn1",
 					  introspection_data->interfaces[0],
 					  &interface_vtable,
 					  NULL,  /* user_data */
@@ -349,7 +333,7 @@ on_bus_acquired(GDBusConnection *connection,
 	g_assert(registration_id > 0);
 
 	registration_id = g_dbus_connection_register_object(connection,
-					  "/com/upointech/transvpn1",
+					  "/com/upointech/testvpn1",
 					  introspection_data2->interfaces[0],
 					  &interface_vtable,
 					  NULL,	/* user_data */
@@ -359,7 +343,7 @@ on_bus_acquired(GDBusConnection *connection,
 	g_assert(registration_id > 0);
 
 	registration_id = g_dbus_connection_register_object(connection,
-					  "/com/upointech/transvpn1/Config/global/global",
+					  "/com/upointech/testvpn1/Config/global/global",
 					  introspection_config_data->interfaces[0],
 					  &interface_global_vtable, /* vtable */
 					  NULL, /* user_data */
@@ -369,7 +353,7 @@ on_bus_acquired(GDBusConnection *connection,
 	g_assert(registration_id > 0);
 
 	registration_id = g_dbus_connection_register_object(connection,
-					  "/com/upointech/transvpn1/Config/section/1",
+					  "/com/upointech/testvpn1/Config/section/1",
 					  introspection_config_data->interfaces[0],
 					  &interface_global_vtable, /* vtable */
 					  NULL, /* user_data */
@@ -378,7 +362,7 @@ on_bus_acquired(GDBusConnection *connection,
 
 	g_assert(registration_id > 0);
 	registration_id = g_dbus_connection_register_object(connection,
-					  "/com/upointech/transvpn1/Config/section/2",
+					  "/com/upointech/testvpn1/Config/section/2",
 					  introspection_config_data->interfaces[0],
 					  &interface_global_vtable, /* vtable */
 					  NULL, /* user_data */
@@ -391,13 +375,13 @@ on_bus_acquired(GDBusConnection *connection,
 	GDBusObjectManagerServer *manager = NULL;
 	GDBusObjectSkeleton *skeleton;
 
-	manager = g_dbus_object_manager_server_new("/com/upointech/transvpn1/Config");
+	manager = g_dbus_object_manager_server_new("/com/upointech/testvpn1/Config");
 
-	skeleton = g_dbus_object_skeleton_new("/com/upointech/transvpn1/Config/global/global");
+	skeleton = g_dbus_object_skeleton_new("/com/upointech/testvpn1/Config/global/global");
 	g_dbus_object_manager_server_export(manager, skeleton);
-	skeleton = g_dbus_object_skeleton_new("/com/upointech/transvpn1/Config/section/1");
+	skeleton = g_dbus_object_skeleton_new("/com/upointech/testvpn1/Config/section/1");
 	g_dbus_object_manager_server_export(manager, skeleton);
-	skeleton = g_dbus_object_skeleton_new("/com/upointech/transvpn1/Config/section/2");
+	skeleton = g_dbus_object_skeleton_new("/com/upointech/testvpn1/Config/section/2");
 
 	g_dbus_object_manager_server_export(manager, skeleton);
 	g_dbus_object_manager_server_set_connection(manager, connection);
@@ -426,12 +410,12 @@ on_name_lost(GDBusConnection *connection,
 }
 
 #if 0
-static int transvpn_stop(void)
+static int testvpn_stop(void)
 {
 	return 0;
 }
 
-static int transvpn_reload(void)
+static int testvpn_reload(void)
 {
 	return 0;
 }
@@ -442,11 +426,11 @@ int main(int argc, char *argv[])
 	guint owner_id;
 
 	//CtSgwAppMgtCallbacks_t app_cbs = { 
-	//	.stop = transvpn_stop,
-	//	.reload = transvpn_reload
+	//	.stop = testvpn_stop,
+	//	.reload = testvpn_reload
 	//};
 
-	CtSgwLogOpen(LOG_USER, "transvpn");
+	CtSgwLogOpen(LOG_USER, "testvpn");
 
 	CtSgwLog(LOG_NOTICE, "start\n");
 
@@ -463,7 +447,7 @@ int main(int argc, char *argv[])
 	g_assert(introspection_config_data != NULL);
 
 	owner_id = g_bus_own_name(DBUS_TYPE,
-							  "com.upointech.transvpn1",
+							  "com.upointech.testvpn1",
 							  G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT,
 							  on_bus_acquired,
 							  NULL,
@@ -472,8 +456,45 @@ int main(int argc, char *argv[])
 							  NULL);
 	g_assert(owner_id != 0);
 
-	system("/files/transite-target/bin/lua /files/transite-target/bin/dnatopt.lua &");
-	//system("/files/transite-target/bin/lua /files/transite-target/bin/dnatopt.lua 2> /data/transerr.txt &");
+	CtSgwObjPath_t path;
+        CtSgwStrArray_t domains = {
+		.str = "www.baidu.com"
+	};
+	CtSgwVPNConn_t vpn =
+	{
+		.path.str = "",
+		.vpn_type = "l2tp",
+		.tunnel_name = "vpn1",
+		.user_id = "user id",
+		.vpn_enable = TRUE,
+		.vpn_mode = "random",
+		.vpn_priority = "3",
+		.vpn_idletime = "3600",
+		.account_proxy = "ip.addr_to_get_vpn_account.com",
+		.vpn_addr = "139.196.93.3",
+		.vpn_account = "raisecom",
+		.vpn_pwd = "raisecom",
+		.vpn_port = "1701",
+		.attach_mode = "1",
+		.domain_num = 1,
+		.domains = &domains,
+		.ip_num = 0,
+		.ips = NULL,
+		.mac_num = 0,
+		.terminal_mac = NULL
+	};
+
+	strcpy(path.str, "/com/ctc/igd1/Network/VPN/Connection/1");
+	int ret = CtSgwSetVPNConnection(path, &vpn);
+	if (ret == CTSGW_OK)
+	{
+		g_print("SetVPNConnection success.");
+	}
+	else
+	{
+		g_print("SetVPNConnection failed.");
+	}
+
 
 	loop = g_main_loop_new(NULL, FALSE);
 	g_main_loop_run(loop);
