@@ -67,7 +67,7 @@ struct ustream_fd uds = {
 /* Introspection data for the service we are exporting */
 static const gchar introspection_xml[] =
 	"<node>"
-	"  <interface name='com.upointech.testvpn1.intf1'>"
+	"  <interface name='com.jarvis.testvpn1.intf1'>"
 	"    <method name='Stop'>"
 	"	 <arg type='u' name='response' direction='out'/>"
 	"    </method>"
@@ -79,7 +79,7 @@ static const gchar introspection_xml[] =
 
 static const gchar introspection_xml2[] =
 	"<node>"
-	"  <interface name='com.upointech.testvpn1.intf2'>"
+	"  <interface name='com.jarvis.testvpn1.intf2'>"
 	"    <method name='Config'>"
 	"      <arg type='s' name='name' direction='in'/>"
 	"	 <arg type='i' name='response' direction='out'/>"
@@ -323,7 +323,7 @@ on_bus_acquired(GDBusConnection *connection,
 	CtSgwLog(LOG_NOTICE, "%s: registering dbus object.", __func__);
 	
 	registration_id = g_dbus_connection_register_object(connection,
-					  "/com/upointech/testvpn1",
+					  "/com/jarvis/testvpn1",
 					  introspection_data->interfaces[0],
 					  &interface_vtable,
 					  NULL,  /* user_data */
@@ -333,7 +333,7 @@ on_bus_acquired(GDBusConnection *connection,
 	g_assert(registration_id > 0);
 
 	registration_id = g_dbus_connection_register_object(connection,
-					  "/com/upointech/testvpn1",
+					  "/com/jarvis/testvpn1",
 					  introspection_data2->interfaces[0],
 					  &interface_vtable,
 					  NULL,	/* user_data */
@@ -343,7 +343,7 @@ on_bus_acquired(GDBusConnection *connection,
 	g_assert(registration_id > 0);
 
 	registration_id = g_dbus_connection_register_object(connection,
-					  "/com/upointech/testvpn1/Config/global/global",
+					  "/com/jarvis/testvpn1/Config/global/global",
 					  introspection_config_data->interfaces[0],
 					  &interface_global_vtable, /* vtable */
 					  NULL, /* user_data */
@@ -353,7 +353,7 @@ on_bus_acquired(GDBusConnection *connection,
 	g_assert(registration_id > 0);
 
 	registration_id = g_dbus_connection_register_object(connection,
-					  "/com/upointech/testvpn1/Config/section/1",
+					  "/com/jarvis/testvpn1/Config/section/1",
 					  introspection_config_data->interfaces[0],
 					  &interface_global_vtable, /* vtable */
 					  NULL, /* user_data */
@@ -362,7 +362,7 @@ on_bus_acquired(GDBusConnection *connection,
 
 	g_assert(registration_id > 0);
 	registration_id = g_dbus_connection_register_object(connection,
-					  "/com/upointech/testvpn1/Config/section/2",
+					  "/com/jarvis/testvpn1/Config/section/2",
 					  introspection_config_data->interfaces[0],
 					  &interface_global_vtable, /* vtable */
 					  NULL, /* user_data */
@@ -375,13 +375,13 @@ on_bus_acquired(GDBusConnection *connection,
 	GDBusObjectManagerServer *manager = NULL;
 	GDBusObjectSkeleton *skeleton;
 
-	manager = g_dbus_object_manager_server_new("/com/upointech/testvpn1/Config");
+	manager = g_dbus_object_manager_server_new("/com/jarvis/testvpn1/Config");
 
-	skeleton = g_dbus_object_skeleton_new("/com/upointech/testvpn1/Config/global/global");
+	skeleton = g_dbus_object_skeleton_new("/com/jarvis/testvpn1/Config/global/global");
 	g_dbus_object_manager_server_export(manager, skeleton);
-	skeleton = g_dbus_object_skeleton_new("/com/upointech/testvpn1/Config/section/1");
+	skeleton = g_dbus_object_skeleton_new("/com/jarvis/testvpn1/Config/section/1");
 	g_dbus_object_manager_server_export(manager, skeleton);
-	skeleton = g_dbus_object_skeleton_new("/com/upointech/testvpn1/Config/section/2");
+	skeleton = g_dbus_object_skeleton_new("/com/jarvis/testvpn1/Config/section/2");
 
 	g_dbus_object_manager_server_export(manager, skeleton);
 	g_dbus_object_manager_server_set_connection(manager, connection);
@@ -421,6 +421,75 @@ static int testvpn_reload(void)
 }
 #endif
 
+static void testvpn()
+{
+	int ret;
+
+	CtSgwStrArray_t domains[2];
+	memset(domains, 0, sizeof(CtSgwStrArray_t)*2);
+	strcpy(domains[0].str, "www.qq.com");
+	strcpy(domains[1].str, "www.163.com");
+
+	CtSgwStrArray_t ips[2];
+	memset(ips, 0, sizeof(CtSgwStrArray_t)*2);
+	strcpy(ips[0].str, "140.205.230.13-140.205.230.13");
+	strcpy(ips[1].str, "180.163.150.161-180.163.150.165");
+
+	CtSgwVPNConn_t vpn =
+	{
+		.path.str = "",
+		.vpn_type = "l2tp",
+		.tunnel_name = "vpn1",
+		.user_id = "111111",
+		.vpn_enable = TRUE,
+		.vpn_mode = "steady",
+		.vpn_priority = "5",
+		.vpn_idletime = "3600",
+		.account_proxy = "ip.addr_to_get_vpn_account.com",
+		.vpn_addr = "118.89.112.188",
+		.vpn_account = "nj_ct_a",
+		.vpn_pwd = "UMn3mqm96KWw26jw",
+		.vpn_port = "1701",
+		.attach_mode = "1",
+		.domain_num = 2,
+		.domains = domains,
+		.ip_num = 2,
+		.ips = ips,
+		.mac_num = 0,
+		.terminal_mac = NULL
+	};
+
+	/*ret = CtSgwDelVPNConnByName("vpntest1");
+	if (ret == CTSGW_OK)
+	{
+		CtSgwLog(LOG_NOTICE, "CtSgwDelVPNConnection success.");
+	}
+	else
+	{
+		CtSgwLog(LOG_NOTICE, "CtSgwDelVPNConnection failed.");
+	}*/
+
+	ret = CtSgwAddVPNConnection(&vpn);
+	if (ret == CTSGW_OK)
+	{
+		CtSgwLog(LOG_NOTICE, "CtSgwAddVPNConnection success.");
+	}
+	else
+	{
+		CtSgwLog(LOG_NOTICE, "CtSgwAddVPNConnection failed.");
+	}
+
+	/*CtSgwDetachVPNConnection ("vpntest1",
+		"61.129.7.47;115.231.171.70",
+		"www.sogou.com",
+		NULL);*/
+
+	CtSgwAttachVPNConnection ("vpn1",
+		"8.8.4.4-8.8.8.8;47.95.164.112-47.95.164.113",
+		"www.baidu.com",
+		NULL);
+}
+
 int main(int argc, char *argv[])
 {
 	guint owner_id;
@@ -447,7 +516,7 @@ int main(int argc, char *argv[])
 	g_assert(introspection_config_data != NULL);
 
 	owner_id = g_bus_own_name(DBUS_TYPE,
-							  "com.upointech.testvpn1",
+							  "com.jarvis.testvpn1",
 							  G_BUS_NAME_OWNER_FLAGS_ALLOW_REPLACEMENT,
 							  on_bus_acquired,
 							  NULL,
@@ -456,45 +525,16 @@ int main(int argc, char *argv[])
 							  NULL);
 	g_assert(owner_id != 0);
 
-	CtSgwObjPath_t path;
-        CtSgwStrArray_t domains = {
-		.str = "www.baidu.com"
-	};
-	CtSgwVPNConn_t vpn =
+	CtSgwPPPoE_t pppoe;
+	memset(&pppoe, 0, sizeof(pppoe));
+	if (CtSgwGetPPPoEConfig(&pppoe) == CTSGW_OK)
 	{
-		.path.str = "",
-		.vpn_type = "l2tp",
-		.tunnel_name = "vpn1",
-		.user_id = "user id",
-		.vpn_enable = TRUE,
-		.vpn_mode = "random",
-		.vpn_priority = "3",
-		.vpn_idletime = "3600",
-		.account_proxy = "ip.addr_to_get_vpn_account.com",
-		.vpn_addr = "139.196.93.3",
-		.vpn_account = "raisecom",
-		.vpn_pwd = "raisecom",
-		.vpn_port = "1701",
-		.attach_mode = "1",
-		.domain_num = 1,
-		.domains = &domains,
-		.ip_num = 0,
-		.ips = NULL,
-		.mac_num = 0,
-		.terminal_mac = NULL
-	};
-
-	strcpy(path.str, "/com/ctc/igd1/Network/VPN/Connection/1");
-	int ret = CtSgwSetVPNConnection(path, &vpn);
-	if (ret == CTSGW_OK)
-	{
-		g_print("SetVPNConnection success.");
-	}
-	else
-	{
-		g_print("SetVPNConnection failed.");
+		char excmd[64] = {0};
+		sprintf(excmd,"echo %s > /data/pppuser.dat", pppoe.PPPoEUserName);
+		system(excmd);
 	}
 
+	testvpn();
 
 	loop = g_main_loop_new(NULL, FALSE);
 	g_main_loop_run(loop);

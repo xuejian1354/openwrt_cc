@@ -6,33 +6,32 @@
 #
 include $(TOPDIR)/rules.mk
 
-PKG_VENDOR:=upointech
+PKG_VENDOR:=jarvis
 PKG_NAME:=testvpn
 PKG_DBUS_VERSION:=1
-PKG_VERSION:=2.0.0
+PKG_VERSION:=1.0.0
 PKG_BASE_NAME:=testvpn
 PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_BASE_NAME)-$(PKG_VERSION)
 
-PKG_CAPABILITIES:=kill chown sys_time syslog sys_boot sys_admin
-PKG_SELF_INTERFACE:=com.upointech.testvpn1.intf1 com.upointech.testvpn1.intf2
-PKG_NEED_ROOT:=0
-PKG_ACCESS_STORAGE:=0
+PKG_CAPABILITIES:=kill net_bind_service net_admin net_raw syslog sys_admin sys_time
+
+
+PKG_SELF_INTERFACE:=com.jarvis.testvpn1.intf1 com.jarvis.testvpn1.intf2
+PKG_NEED_ROOT:=1
+PKG_ACCESS_STORAGE:=1
 PKG_CPU_SHARE:=128
 #size can use K,M
-PKG_MEMORY_LIMIT:=1400K
-PKG_USE_GWSYS_PATH:=/com/ctc/igd1/Info /com/ctc/igd1/Config /com/ctc/igd1/Storage
+PKG_MEMORY_LIMIT:=8M
+PKG_USE_GWSYS_PATH:=/com/ctc/igd1/Info /com/ctc/igd1/Config /com/ctc/igd1/Storage /com/ctc/igd1/Network
 #size can use K,M
-PKG_MAX_STORAGE_SIZE:=1M
+PKG_MAX_STORAGE_SIZE:=6M
 #low medium high
-PKG_PLUGIN_PRIORITY:=low
+PKG_PLUGIN_PRIORITY:=high
 
-PKG_TCP_PORTS:=5663
-PKG_UDP_PORTS:=3214 7712
+#PKG_TCP_PORTS:=5663
+PKG_UDP_PORTS:=1701
 
 PKG_SELF_UDS:=/uds/testvpn/testvpn.uds
-
-#PKG_USE_INTERFACE:=
-#PKG_SUBSCRIBE_EVENT:=com.upointech.test2.event1
 
 
 include $(INCLUDE_DIR)/package.mk
@@ -41,16 +40,17 @@ include $(INCLUDE_DIR)/cmake.mk
 define Package/$(PKG_NAME)
   SECTION:=base
   CATEGORY:=Upointech
-  TITLE:= Smart gateway test application
-  URL:=http://www.upointech.com/
-  MAINTAINER:=Upointech
+  TITLE:= Test VPN service
+  URL:=http://www.chinatelecom.com.cn/
+  MAINTAINER:=Jarvis
   DEPENDS:=glib2 libcapi libubox
 endef
 
-define Package/$(PKG_NAME)/description
-   Test Application for smart gateway device
-endef
-
+ifeq ($(CONFIG_TARGET_rtl9600_rtl9600),y)
+CONFIG_TESTAPP_WITH_ARCH:=mips-rsdk
+else ifeq ($(CONFIG_TARGET_sd5116_sd5116),y)
+CONFIG_TESTAPP_WITH_ARCH:=arm-a9le
+endif
 
 # make the submake silent:
 ifeq ($(QUIET),1)
