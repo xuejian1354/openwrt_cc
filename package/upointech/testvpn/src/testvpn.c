@@ -424,6 +424,9 @@ static int testvpn_reload(void)
 static void testvpn()
 {
 	int ret;
+	CtSgwVPNConn_t *vpnobjs = NULL, *pEntry = NULL;
+	gint32 count= 0;
+	int isHasVPN = 0;
 
 	CtSgwStrArray_t domains[2];
 	memset(domains, 0, sizeof(CtSgwStrArray_t)*2);
@@ -439,7 +442,7 @@ static void testvpn()
 	{
 		.path.str = "",
 		.vpn_type = "l2tp",
-		.tunnel_name = "vpn1",
+		.tunnel_name = "vpntest2",
 		.user_id = "111111",
 		.vpn_enable = TRUE,
 		.vpn_mode = "steady",
@@ -469,25 +472,48 @@ static void testvpn()
 		CtSgwLog(LOG_NOTICE, "CtSgwDelVPNConnection failed.");
 	}*/
 
-	ret = CtSgwAddVPNConnection(&vpn);
-	if (ret == CTSGW_OK)
-	{
-		CtSgwLog(LOG_NOTICE, "CtSgwAddVPNConnection success.");
+	ret = CtSgwGetVPNConnObjs(&vpnobjs, &count);
+	if (ret == CTSGW_OK) {
+		int i;
+		pEntry = vpnobjs;
+		for (i = 0; i < count; i++)
+		{
+			if(!strcmp(pEntry ->tunnel_name, "vpntest1"))
+			{
+				isHasVPN = 1;
+				break;
+			}
+			pEntry++;
+		}
+		g_free(vpnobjs);
 	}
 	else
 	{
-		CtSgwLog(LOG_NOTICE, "CtSgwAddVPNConnection failed.");
+		CtSgwLog(LOG_NOTICE, "GetVPNConnObjs failed.");
+	}
+
+	if(!isHasVPN)
+	{
+		ret = CtSgwAddVPNConnection(&vpn);
+		if (ret == CTSGW_OK)
+		{
+			CtSgwLog(LOG_NOTICE, "CtSgwAddVPNConnection success.");
+		}
+		else
+		{
+			CtSgwLog(LOG_NOTICE, "CtSgwAddVPNConnection failed.");
+		}
 	}
 
 	/*CtSgwDetachVPNConnection ("vpntest1",
 		"61.129.7.47;115.231.171.70",
 		"www.sogou.com",
-		NULL);*/
+		NULL);
 
 	CtSgwAttachVPNConnection ("vpn1",
 		"8.8.4.4-8.8.8.8;47.95.164.112-47.95.164.113",
 		"www.baidu.com",
-		NULL);
+		NULL);*/
 }
 
 int main(int argc, char *argv[])
