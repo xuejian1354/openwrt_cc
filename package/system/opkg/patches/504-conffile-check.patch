@@ -1,0 +1,11 @@
+--- a/libopkg/conffile.c	2016-04-27 19:58:17.368708682 +0800
++++ b/libopkg/conffile.c	2016-05-04 15:03:25.325862881 +0800
+@@ -53,7 +53,7 @@
+ #else
+     chksum = file_sha256sum_alloc(root_filename);
+ #endif
+-    if (chksum && (ret = strcmp(chksum, conffile->value))) {
++    if (chksum && (ret = strncmp(chksum, conffile->value, strlen(conffile->value)))) {
+         opkg_msg(INFO, "Conffile %s:\n\told chk=%s\n\tnew chk=%s\n",
+ 		conffile->name, chksum, conffile->value);
+     }

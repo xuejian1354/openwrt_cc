@@ -1,0 +1,464 @@
+# Copyright (C) 2006-2013 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v2.
+# See /LICENSE for more information.
+#
+
+menuconfig TARGET_OPTIONS
+	bool "Target Options"  if DEVEL
+
+	config TARGET_OPTIMIZATION
+		string "Target Optimizations" if TARGET_OPTIONS
+		default DEFAULT_TARGET_OPTIMIZATION
+		help
+		  Optimizations to use when building for the target host.
+
+	config SOFT_FLOAT
+		bool "Use software floating point by default" if TARGET_OPTIONS
+		default y if !HAS_FPU
+		depends on arm || armeb || powerpc || mipsel || mips || mips64el || mips64
+		help
+		  If your target CPU does not have a Floating Point Unit (FPU) or a
+		  kernel FPU emulator, but you still wish to support floating point
+		  functions, then everything will need to be compiled with soft floating
+		  point support (-msoft-float).
+
+		  Most people will answer N.
+
+	config USE_MIPS16
+		bool "Build packages with MIPS16 instructions" if TARGET_OPTIONS
+		depends on HAS_MIPS16
+		depends on !GCC_VERSION_4_6
+		default y
+		help
+		  If your target CPU does support the MIPS16 instruction set
+		  and you want to use it for packages, enable this option.
+		  MIPS16 produces smaller binaries thus reducing pressure on
+		  caches and TLB.
+
+		  Most people will answer N.
+
+
+menuconfig EXTERNAL_TOOLCHAIN
+	bool
+	prompt "Use external toolchain"  if DEVEL
+	help
+	  If enabled, OpenWrt will compile using an existing toolchain instead of
+	  compiling one.
+
+	config NATIVE_TOOLCHAIN
+		bool
+		prompt "Use host's toolchain"  if DEVEL
+		depends on EXTERNAL_TOOLCHAIN
+		select NO_STRIP
+		help
+		  If enabled, OpenWrt will compile using the native toolchain for your
+		  host instead of compiling one.
+		  
+	choice
+	prompt "Target Toolchain" if DEVEL
+	default TARGET_BRCM
+	depends on EXTERNAL_TOOLCHAIN
+		
+		config TARGET_MTK
+			bool "MTK 7526 toolchains"
+			help
+			  Build firmware images with MTK7526 external toolchains.
+
+		config TARGET_MT7580
+			bool "MTK 7580 toolchains"
+			help
+			  Build firmware images with MTK7580 external toolchains.
+
+		config TARGET_ZTE
+			bool "ZTE 279100 toolchains"
+			help
+			  Build firmware images with ZTE external toolchains.
+		config TARGET_ZTE279121
+			bool "ZTE 279121 toolchains"
+			help
+			  Build firmware images with ZTE external toolchains.
+		config TARGET_ZTE279131
+			bool "ZTE 279131 toolchains"
+			help
+			  Build firmware images with ZTE external toolchains.
+		config TARGET_ZXIC
+			bool "ZXIC 2791 toolchains"
+			help
+			  Build firmware images with ZXIC external toolchains.
+			  
+		config TARGET_ZXIC2791
+			bool "zxic 2791xx uclibc toolchains"
+			help
+			  Build firmware images with ZXIC 2791xx uclibc toolchains.			
+
+		config TARGET_ZXIC2791V1
+			bool "zxic 2791xx glibc toolchains"
+			help
+			  Build firmware images with ZXIC 2791xx glibc toolchains.				  
+
+		config TARGET_HUAWEI
+			bool "Huawei 5116 toolchains"
+			help
+			  Build firmware images with Huawei 5116 external toolchains.
+			  
+		config TARGET_sd5116v1
+			bool "Huawei 5116v1 toolchains"
+			help
+			  Build firmware images with Huawei 5116v1 external toolchains.
+
+		config TARGET_sd5117
+			bool "Huawei 5117 toolchains"
+			help
+			  Build firmware images with Huawei 5117 external toolchains.
+
+  		config TARGET_HI5662
+			bool "Haisi 5662 toolchains"
+			help
+			  Build firmware images with Haisi 5662 external toolchains.	
+		config TARGET_HI5681
+			bool "Haisi 5681 toolchains"
+			help
+			  Build firmware images with Haisi 5681 external toolchains.			  
+
+		config TARGET_REALTEK
+			bool "Realtek rtl9600 toolchains"
+			help
+			  Build firmware images with Realtek external toolchains.
+
+		config TARGET_RTL960XC
+			bool "Realtek rtl9603c/9607c toolchains"
+			help
+			  Build firmware images with Realtek external toolchains.
+
+		config TARGET_CA8277
+			bool "Realtek CA8277 toolchains"
+			help
+			  Build firmware images with Realtek external toolchains.			  
+			  
+			  
+		config TARGET_BRCM
+			bool "Broadcom 6838 mips toolchains"
+			help
+			  Build firmware images with Broadcom 6838 external toolchains.
+
+		config TARGET_BRCM6848
+			bool "Broadcom 6848 mips toolchains"
+			help
+			  Build firmware images with Broadcom 6848 external toolchains.
+
+		config TARGET_BRCM6846
+			bool "Broadcom 6846 arm toolchains"
+			help
+			  Build firmware images with Broadcom 6846 external toolchains.
+
+		config TARGET_BRCM6856
+			bool "Broadcom 6856 arm toolchains"
+			help
+			  Build firmware images with Broadcom 6856 external toolchains.					
+
+		config TARGET_BRCM6858
+			bool "Broadcom 6858 arm toolchains"
+			help
+			  Build firmware images with Broadcom 6858 external toolchains.			  
+	
+	endchoice			  
+
+	config TARGET_NAME
+		string
+		depends on EXTERNAL_TOOLCHAIN && !NATIVE_TOOLCHAIN
+		default "mips-mtk-linux-uclibc"     if TARGET_MTK
+		default "mips-7580-linux-uclibc"     if TARGET_MT7580
+		default "arm-linux-uclibc"     if TARGET_ZTE
+		default "arm-linux-uclibcgnueabi"     if TARGET_ZXIC
+		default "arm-zxic2791-linux-uclibcgnueabi"   if TARGET_ZXIC2791
+		default "arm-zxic2791glibc-linux"   if TARGET_ZXIC2791V1
+		default "arm-279121-linux-uclibc"     if TARGET_ZTE279121
+		default "arm-279131-linux-uclibc"     if TARGET_ZTE279131
+		default "arm-510-linux"   if TARGET_sd5116v1
+		default "arm-sd5117-linux"   if TARGET_sd5117
+		default "arm-linux"   if TARGET_HUAWEI
+		default "arm-openwrt-linux"   if TARGET_HI5681
+		default "arm-hi5662-linux"   if TARGET_HI5662
+		default "mips-linux"  if TARGET_REALTEK
+		default "mips-960xc-linux" if TARGET_RTL960XC
+		default "aarch64-asdk64-linux" if TARGET_CA8277
+		default "mips-unknown-linux-uclibc"   if TARGET_BRCM
+		default "mips-bcm6848-linux-uclibc"   if TARGET_BRCM6848
+		default "arm-bcm6856-linux-uclibc"   if TARGET_BRCM6856
+		default "arm-bcm6858-linux-uclibc"   if TARGET_BRCM6858 || TARGET_BRCM6846
+
+	config TOOLCHAIN_PREFIX
+		string
+		depends on EXTERNAL_TOOLCHAIN && !NATIVE_TOOLCHAIN
+		default "mips-linux-"     if TARGET_MTK ||  TARGET_BRCM6848
+		default "mipsel-linux-"     if TARGET_MT7580
+		default "arm-linux-uclibc-"     if TARGET_ZTE
+		default "arm-linux-uclibcgnueabi-"     if TARGET_ZXIC || TARGET_ZXIC2791
+		default "arm-buildroot-linux-gnueabi-"     if TARGET_ZXIC2791V1
+		default "arm-buildroot-linux-uclibcgnueabi-"     if TARGET_ZTE279121
+		default "arm-sanechips-linux-gnueabihf-"     if TARGET_ZTE279131
+		default "arm-linux-uclibceabi-"   if TARGET_HUAWEI
+		default "arm-openwrt-linux-"   if TARGET_HI5681 || TARGET_HI5662
+		default "rsdk-linux-"  if TARGET_REALTEK
+		default "msdk-linux-"  if TARGET_RTL960XC
+		default "aarch64-linux-"  if TARGET_CA8277
+		default "mips-unknown-linux-uclibc-"   if TARGET_BRCM
+		default "arm-linux-"   if TARGET_BRCM6858 || TARGET_BRCM6846 || TARGET_BRCM6856
+
+	config TOOLCHAIN_ROOT
+		string
+		depends on EXTERNAL_TOOLCHAIN && !NATIVE_TOOLCHAIN
+		default "/opt/trendchip/mips-linux-uclibc-4.9.3/usr"     if TARGET_MTK
+		default "/opt/trendchip/mipsel-linux-uclibc-4.6.3-kernel3.18/usr"     if TARGET_MT7580
+		default "/opt/zte/arm_eabi_gcc4.8.2_uClibc0.9.33"     if TARGET_ZTE
+		default "/opt/arm-linux-uclibcgnueabi"     if TARGET_ZXIC
+		default "/opt/arm-linux-uclibcgnueabi_soft_x64_rpc_ipv6"   if TARGET_ZXIC2791
+		default "/opt/arm-linux-glibc-zxic"   if TARGET_ZXIC2791V1
+		default "/opt/zte/cross_compiler/arm-linux-uclibcgnueabi"     if TARGET_ZTE279121
+		default "/opt/zte/cross_compiler/toolchain-5.3.1-arm32/usr"     if TARGET_ZTE279131
+		default "/opt/RTOS.228512/V100R005C00/armA9le_3.10_ek_micro"   if TARGET_sd5116v1
+		default "/opt/RTOS.236796/V100R005C00/armA9le_3.10_ek_micro"   if TARGET_sd5117
+		default "/opt/RTOS/V100R005C00/armA9le_3.10_ek_micro"   if TARGET_HUAWEI
+		default "/opt/haisi/arm-openwrt-linux-uclibcgnueabi"   if TARGET_HI5681
+		default "/opt/haisi/arm-openwrt-linux-gnueabi"   if TARGET_HI5662
+		default "/opt/rsdk-4.8.5-5281-EB-3.18-u0.9.33-m32ut-150818p01_151020"  if TARGET_REALTEK
+		default "/opt/msdk-4.8.5-mips-EB-3.18-u0.9.33-m32ut-170828_lunapro-171213_yueme"  if TARGET_RTL960XC
+		default "/opt/asdk-5.4.1-a53-EL-4.4-g2.23-a64nut-170801-r1"  if TARGET_CA8277
+		default "/opt/toolchains/crosstools-mips-gcc-4.6-linux-3.4-uclibc-0.9.33-binutils-2.24-NPTL"   if TARGET_BRCM
+		default "/opt/toolchains/crosstools-mips-gcc-5.3-linux-4.1-uclibc-1.0.12-binutils-2.25-NPTL"   if TARGET_BRCM6848
+		default "/opt/toolchains/crosstools-arm-gcc-5.3-linux-4.1-glibc-2.24-binutils-2.25"   if TARGET_BRCM6858 || TARGET_BRCM6846
+		default "/opt/toolchains/crosstools-arm-gcc-5.5-linux-4.1-glibc-2.26-binutils-2.28.1"   if TARGET_BRCM6856
+
+	config TOOLCHAIN_LIBC
+		string
+		depends on EXTERNAL_TOOLCHAIN && !NATIVE_TOOLCHAIN
+		default "uclibc" if TARGET_MTK || TARGET_MT7580 || TARGET_ZTE || TARGET_ZXIC || TARGET_ZXIC2791 || TARGET_ZTE279121 || TARGET_HI5662 || TARGET_HI5681 || TARGET_HUAWEI || TARGET_REALTEK || TARGET_RTL960XC || TARGET_BRCM || TARGET_BRCM6848
+		default "glibc" if TARGET_BRCM6858 || TARGET_BRCM6856 || TARGET_BRCM6846 || TARGET_ZTE279131 || TARGET_CA8277 || TARGET_ZXIC2791V1
+		help
+		  Specify the libc type used by the external toolchain. The given value
+		  is passed as -m flag to all gcc and g++ invocations. This is mainly
+		  intended for multilib toolchains which support glibc and uclibc at
+		  the same time. If no value is specified, no -m flag is passed.
+
+	config TOOLCHAIN_BIN_PATH
+		string
+		depends on EXTERNAL_TOOLCHAIN && !NATIVE_TOOLCHAIN
+		default "./bin" if TARGET_MTK || TARGET_MT7580
+		default "./usr/bin ./bin" if TARGET_ZTE
+		default "./bin" if TARGET_ZXIC || TARGET_ZXIC2791 || TARGET_ZXIC2791V1 || TARGET_ZTE279121 || TARGET_ZTE279131
+		default "./bin" if TARGET_HUAWEI || TARGET_HI5662 || TARGET_HI5681
+		default "./usr/bin ./bin" if TARGET_REALTEK || TARGET_RTL960XC || TARGET_CA8277
+		default "./usr/bin" if TARGET_BRCM || TARGET_BRCM6848 || TARGET_BRCM6858 || TARGET_BRCM6856 || TARGET_BRCM6846
+		help
+		  Specify additional directories searched for toolchain binaries
+		  (override PATH). Use ./DIR for directories relative to the root above.
+
+	config TOOLCHAIN_INC_PATH
+		string
+		depends on EXTERNAL_TOOLCHAIN && !NATIVE_TOOLCHAIN
+		default "./mips-buildroot-linux-uclibc/sysroot/usr/include" if TARGET_MTK
+		default "./mipsel-buildroot-linux-uclibc/sysroot/usr/include" if TARGET_MT7580
+		default "./arm-linux-uclibcgnueabi/include" if TARGET_ZTE || TARGET_ZXIC || TARGET_ZXIC2791
+		default "./arm-buildroot-linux-gnueabi/sysroot/usr/include" if TARGET_ZXIC2791V1
+		default "./arm-buildroot-linux-uclibcgnueabi/sysroot/usr/include" if TARGET_ZTE279121
+		default "./arm-sanechips-linux-gnueabihf/sysroot/usr/include" if TARGET_ZTE279131
+		default "./sdk/usr/include" if TARGET_HUAWEI
+		default "./include" if TARGET_HI5681 || TARGET_HI5662
+		default "./usr/include" if TARGET_REALTEK || TARGET_BRCM || TARGET_BRCM6848
+		default "./mips-linux-uclibc/include" if TARGET_RTL960XC
+		default "./aarch64-linux-gnu/include" if TARGET_CA8277
+		default "./usr/arm-buildroot-linux-gnueabi/sysroot/usr/include" if TARGET_BRCM6858 || TARGET_BRCM6856 || TARGET_BRCM6846
+		help
+		  Specify additional directories searched for header files (override
+		  CPPFLAGS). Use ./DIR for directories relative to the root above.
+
+	config TOOLCHAIN_LIB_PATH
+		string
+		depends on EXTERNAL_TOOLCHAIN && !NATIVE_TOOLCHAIN
+		default "./mips-buildroot-linux-uclibc/sysroot/lib" if TARGET_MTK
+		default "./mipsel-buildroot-linux-uclibc/sysroot/lib" if TARGET_MT7580
+		default "./arm-linux-uclibcgnueabi/lib" if TARGET_ZTE || TARGET_ZXIC || TARGET_ZXIC2791
+		default "./arm-buildroot-linux-gnueabi/sysroot/lib" if TARGET_ZXIC2791V1
+		default "./arm-buildroot-linux-uclibcgnueabi/sysroot/usr/lib" if TARGET_ZTE279121
+		default "./arm-sanechips-linux-gnueabihf/sysroot/usr/lib" if TARGET_ZTE279131
+		default "./lib" if TARGET_HUAWEI || TARGET_HI5681 || TARGET_HI5662
+		default "./usr/lib" if TARGET_REALTEK
+		default "./mips-linux-uclibc/lib" if TARGET_RTL960XC		
+		default "./aarch64-linux-gnu/lib" if TARGET_CA8277		
+		default "./usr/lib ./lib" if TARGET_BRCM || TARGET_BRCM6848
+		default "./usr/arm-buildroot-linux-gnueabi/sysroot/usr/lib" if TARGET_BRCM6858 || TARGET_BRCM6856 || TARGET_BRCM6846
+		help
+		  Specify additional directories searched for libraries (override LDFLAGS).
+		  Use ./DIR for directories relative to the root above.
+
+config NEED_TOOLCHAIN
+	bool
+	depends on DEVEL
+	default y if !EXTERNAL_TOOLCHAIN
+
+menuconfig TOOLCHAINOPTS
+	bool "Toolchain Options"  if DEVEL
+	depends on NEED_TOOLCHAIN
+
+menuconfig EXTRA_TARGET_ARCH
+	bool
+	prompt "Enable an extra toolchain target architecture" if TOOLCHAINOPTS
+	depends on !sparc
+	default y	if powerpc64
+	default n
+	help
+	  Some builds may require a 'biarch' toolchain. This option
+	  allows you to specify an additional target arch.
+
+	  Most people will answer N here.
+
+	config EXTRA_TARGET_ARCH_NAME
+		string
+		default "powerpc64"	if powerpc64
+		prompt "Extra architecture name" if EXTRA_TARGET_ARCH
+		help
+		  Specify the cpu name (eg powerpc64 or x86_64) of the
+		  additional target architecture.
+
+	config EXTRA_TARGET_ARCH_OPTS
+		string
+		default "-m64"		if powerpc64
+		prompt "Extra architecture compiler options" if EXTRA_TARGET_ARCH
+		help
+		  If you're specifying an addition target architecture,
+		  you'll probably need to also provide options to make
+		  the compiler use this alternate arch.
+
+		  For example, if you're building a compiler that can build
+		  both powerpc and powerpc64 binaries, you'll need to
+		  specify -m64 here.
+
+
+	choice
+		prompt "MIPS64 user-land ABI" if TOOLCHAINOPTS && (mips64 || mips64el)
+		default MIPS64_ABI_N64
+		help
+		   MIPS64 supports 3 different user-land ABIs: o32 (legacy),
+		   n32 and n64.
+
+		config MIPS64_ABI_N64
+			bool "n64"
+
+		config MIPS64_ABI_N32
+			bool "n32"
+
+		config MIPS64_ABI_O32
+			bool "o32"
+
+	endchoice
+
+comment "Binary tools"
+	depends on TOOLCHAINOPTS
+
+source "toolchain/binutils/Config.in"
+
+comment "Compiler"
+	depends on TOOLCHAINOPTS
+
+source "toolchain/gcc/Config.in"
+
+comment "C Library"
+	depends on TOOLCHAINOPTS
+
+choice
+	prompt "C Library implementation" if TOOLCHAINOPTS
+	default LIBC_USE_GLIBC if (aarch64 || aarch64_be)
+	default LIBC_USE_UCLIBC
+	help
+	  Select the C library implementation.
+
+	config LIBC_USE_GLIBC
+		bool "Use (e)glibc"
+		select USE_GLIBC
+
+	config LIBC_USE_UCLIBC
+		select USE_UCLIBC
+		bool "Use uClibc"
+		depends on !(aarch64 || aarch64_be)
+
+	config LIBC_USE_MUSL
+		select USE_MUSL
+		bool "Use musl"
+		depends on BROKEN
+		depends on !(mips64 || mips64el)
+
+endchoice
+
+source "toolchain/glibc/Config.in"
+source "toolchain/uClibc/Config.in"
+source "toolchain/musl/Config.in"
+
+comment "Debuggers"
+	depends on TOOLCHAINOPTS
+
+config GDB
+	bool
+	depends on !(aarch64 || aarch64_be)
+	prompt "Build gdb" if TOOLCHAINOPTS
+	default y if !EXTERNAL_TOOLCHAIN
+	help
+	  Enable if you want to build the gdb.
+
+config INSIGHT
+	bool
+	prompt "Build insight-gdb" if TOOLCHAINOPTS
+	select GDB
+	default n
+	help
+	  Enable if you want to build insight-gdb.
+
+config USE_GLIBC
+	bool
+	default y if !TOOLCHAINOPTS && !EXTERNAL_TOOLCHAIN && !NATIVE_TOOLCHAIN && (aarch64 || aarch64_be || octeon)
+
+config USE_UCLIBC
+	bool
+	default y if !TOOLCHAINOPTS && !EXTERNAL_TOOLCHAIN && !NATIVE_TOOLCHAIN && !(aarch64 || aarch64_be || octeon)
+
+config USE_MUSL
+	bool
+
+config USE_EXTERNAL_LIBC
+	bool
+	default y if EXTERNAL_TOOLCHAIN || NATIVE_TOOLCHAIN
+
+source "toolchain/gcc/Config.version"
+
+source "toolchain/glibc/Config.version"
+source "toolchain/uClibc/Config.version"
+source "toolchain/musl/Config.version"
+
+config LIBC
+	string
+	default "glibc"   if USE_GLIBC
+	default "uClibc"  if USE_UCLIBC
+	default "musl"	  if USE_MUSL
+
+config LIBC_VERSION
+	string
+	default GLIBC_VERSION   if USE_GLIBC
+	default UCLIBC_VERSION  if USE_UCLIBC
+	default MUSL_VERSION	if USE_MUSL
+
+config TARGET_SUFFIX
+	string
+	default "gnueabi"         if USE_GLIBC && (arm || armeb)
+	default "gnu"             if USE_GLIBC && !(arm || armeb)
+	default "uclibcgnueabi"   if USE_UCLIBC && (arm || armeb)
+	default "uclibc"          if USE_UCLIBC && !(arm || armeb)
+	default "muslgnueabi"     if USE_MUSL && (arm || armeb)
+	default "musl"            if USE_MUSL && !(arm || armeb)
+
+config MIPS64_ABI
+	depends on mips64 || mips64el
+	string
+	default "64" if MIPS64_ABI_N64
+	default "n32" if MIPS64_ABI_N32
+	default "32" if MIPS64_ABI_O32
+	default "64"

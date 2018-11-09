@@ -1,0 +1,20 @@
+--- a/libblkid-tiny/mkdev.c	2016-09-16 20:29:15.000000000 +0800
++++ b/libblkid-tiny/mkdev.c	2018-09-27 17:14:39.549791629 +0800
+@@ -14,6 +14,7 @@
+ 
+ #define _DEFAULT_SOURCE
+ 
++#include <sys/sysmacros.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
+ 
+--- a/libubi/libubi.c	2016-09-16 20:29:15.000000000 +0800
++++ b/libubi/libubi.c	2018-09-27 17:15:39.649789695 +0800
+@@ -22,6 +22,7 @@
+ 
+ #define PROGRAM_NAME "libubi"
+ 
++#include <sys/sysmacros.h>
+ #include <stdlib.h>
+ #include <stdio.h>
+ #include <string.h>

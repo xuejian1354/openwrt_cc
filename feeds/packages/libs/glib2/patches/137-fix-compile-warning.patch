@@ -1,0 +1,11 @@
+--- a/gobject/gobject.h	2018-01-09 05:34:19.000000000 +0800
++++ b/gobject/gobject.h	2018-04-24 18:14:32.291838140 +0800
+@@ -722,7 +722,7 @@
+     return FALSE;
+ 
+   if (new_object != NULL)
+-    g_object_ref (new_object);
++    (void)g_object_ref (new_object);
+ 
+   *object_ptr = new_object;
+ 

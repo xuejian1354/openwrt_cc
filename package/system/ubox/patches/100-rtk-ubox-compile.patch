@@ -1,0 +1,13 @@
+--- a/CMakeLists.txt	2017-01-20 17:22:47.475448640 +0800
++++ b/CMakeLists.txt	2017-01-20 17:54:44.903814520 +0800
+@@ -12,6 +12,10 @@
+ 
+ find_library(json NAMES json-c json)
+ 
++find_path(AVL_PATH libubox/avl.h
++	HINTS ${STAGING_DIR}/usr/include)
++INCLUDE_DIRECTORIES(${AVL_PATH})
++
+ IF(DEBUG)
+   ADD_DEFINITIONS(-DDEBUG -g3)
+ ENDIF()

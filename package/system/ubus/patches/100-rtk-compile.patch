@@ -1,0 +1,13 @@
+--- a/examples/CMakeLists.txt	2015-11-14 07:47:07.000000000 +0800
++++ b/examples/CMakeLists.txt	2016-01-15 07:19:52.607956141 +0800
+@@ -4,8 +4,9 @@
+ INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/..)
+ 
+ IF (BUILD_EXAMPLES)
++	find_library(json NAMES json-c json)
+ 	ADD_EXECUTABLE(server server.c count.c)
+-	TARGET_LINK_LIBRARIES(server ubus ubox blobmsg_json)
++	TARGET_LINK_LIBRARIES(server ubus ubox blobmsg_json ${json})
+ 
+ 	ADD_EXECUTABLE(client client.c count.c)
+ 	TARGET_LINK_LIBRARIES(client ubus ubox)

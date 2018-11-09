@@ -1,0 +1,16 @@
+--- a/gio/gfile.c	2018-03-13 00:23:37.000000000 +0800
++++ b/gio/gfile.c	2018-04-24 16:24:31.005823195 +0800
+@@ -37,6 +37,13 @@
+ #include <errno.h>
+ #endif
+ 
++#ifndef F_SETPIPE_SZ
++#define F_SETPIPE_SZ 1031
++#endif
++#ifndef F_GETPIPE_SZ
++#define F_GETPIPE_SZ 1032
++#endif
++
+ #include <string.h>
+ #include <sys/types.h>
+ 

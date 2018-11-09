@@ -1,0 +1,171 @@
+Index: lxc-1.0.8/src/lxc/utils.c
+===================================================================
+--- lxc-1.0.8.orig/src/lxc/utils.c	2016-04-19 15:39:52.814324527 +0800
++++ lxc-1.0.8/src/lxc/utils.c	2016-04-19 15:39:52.802324526 +0800
+@@ -216,7 +216,7 @@
+ 	const char *homedir;
+ 
+ 	if (geteuid() == 0) {
+-		rundir = strdup(RUNTIME_PATH);
++		rundir = strdup(VENDOR_RUNTIME_PATH);
+ 		return rundir;
+ 	}
+ 
+Index: lxc-1.0.8/src/lxc/utils.h
+===================================================================
+--- lxc-1.0.8.orig/src/lxc/utils.h	2016-04-19 15:39:52.814324527 +0800
++++ lxc-1.0.8/src/lxc/utils.h	2016-04-19 15:39:52.802324526 +0800
+@@ -40,6 +40,10 @@
+ extern int mkdir_p(const char *dir, mode_t mode);
+ extern char *get_rundir(void);
+ 
++#define VENDOR_RW_DIR "/opt/upt"
++#define VENDOR_RUNTIME_PATH VENDOR_RW_DIR"/run"
++
++
+ /* Define getline() if missing from the C library */
+ #include "../include/getline.h"
+ 
+Index: lxc-1.0.8/src/lxc/lxc_init.c
+===================================================================
+--- lxc-1.0.8.orig/src/lxc/lxc_init.c	2016-04-19 15:39:52.814324527 +0800
++++ lxc-1.0.8/src/lxc/lxc_init.c	2016-04-19 15:39:52.802324526 +0800
+@@ -163,7 +163,7 @@
+ 		}
+ 	}
+ 
+-	lxc_setup_fs();
++	//lxc_setup_fs();
+ 
+ 	pid = fork();
+ 
+Index: lxc-1.0.8/src/lxc/initutils.c
+===================================================================
+--- lxc-1.0.8.orig/src/lxc/initutils.c	2016-04-19 15:39:52.814324527 +0800
++++ lxc-1.0.8/src/lxc/initutils.c	2016-04-19 15:39:52.802324526 +0800
+@@ -112,7 +112,8 @@
+ 	char *user_lxc_path = NULL;
+ 	char *user_cgroup_pattern = NULL;
+ 
+-	if (geteuid() > 0) {
++	//if (geteuid() > 0) {
++	if (1) { //always use user home
+ 		const char *user_home = getenv("HOME");
+ 		if (!user_home)
+ 			user_home = "/";
+@@ -123,7 +124,7 @@
+ 
+ 		sprintf(user_config_path, "%s/.config/lxc/lxc.conf", user_home);
+ 		sprintf(user_default_config_path, "%s/.config/lxc/default.conf", user_home);
+-		sprintf(user_lxc_path, "%s/.local/share/lxc/", user_home);
++		sprintf(user_lxc_path, "%s/", user_home);
+ 		user_cgroup_pattern = strdup("lxc/%n");
+ 	}
+ 	else {
+Index: lxc-1.0.8/src/lxc/bdev.c
+===================================================================
+--- lxc-1.0.8.orig/src/lxc/bdev.c	2016-04-19 15:39:52.814324527 +0800
++++ lxc-1.0.8/src/lxc/bdev.c	2016-04-19 15:39:52.802324526 +0800
+@@ -2934,7 +2934,7 @@
+ 
+ 
+ static const struct bdev_type bdevs[] = {
+-	{.name = "zfs", .ops = &zfs_ops,},
++//	{.name = "zfs", .ops = &zfs_ops,},
+ 	{.name = "lvm", .ops = &lvm_ops,},
+ 	{.name = "btrfs", .ops = &btrfs_ops,},
+ 	{.name = "dir", .ops = &dir_ops,},
+@@ -3317,7 +3317,8 @@
+ 			const char *cname, struct bdev_specs *specs)
+ {
+ 	struct bdev *bdev;
+-	char *best_options[] = {"btrfs", "zfs", "lvm", "dir", NULL};
++//	char *best_options[] = {"btrfs", "zfs", "lvm", "dir", NULL};
++	char *best_options[] = {"dir", NULL};
+ 
+ 	if (!type)
+ 		return do_bdev_create(dest, "dir", cname, specs);
+Index: lxc-1.0.8/src/lxc/lxccontainer.c
+===================================================================
+--- lxc-1.0.8.orig/src/lxc/lxccontainer.c	2016-04-19 15:39:52.814324527 +0800
++++ lxc-1.0.8/src/lxc/lxccontainer.c	2016-04-19 15:39:52.802324526 +0800
+@@ -973,6 +973,19 @@
+ 		 * for our geteuid()
+ 		 */
+ 		if (!lxc_list_empty(&conf->id_map)) {
++			if (geteuid() == 0) {
++				nargs += 4;
++				newargv = realloc(newargv, nargs * sizeof(*newargv));
++				if (!newargv)
++					exit(1);
++
++				newargv[nargs - 5] = "--mapped-uid";
++				newargv[nargs - 4] = "0";
++				newargv[nargs - 3] = "--mapped-gid";
++				newargv[nargs - 2] = "0";
++				newargv[nargs - 1] = NULL;			
++			} else {
++
+ 			int n2args = 1;
+ 			char txtuid[20];
+ 			char txtgid[20];
+@@ -1073,7 +1086,12 @@
+ 			n2[n2args-1] = NULL;
+ 			free(newargv);
+ 			newargv = n2;
++			}
+ 		}
++
++		for (i = 0; newargv[i]; i++)
++			INFO("[%d] %s", i, newargv[i]);
++
+ 		/* execute */
+ 		execvp(tpath, newargv);
+ 		SYSERROR("failed to execute template %s", tpath);
+Index: lxc-1.0.8/src/lxc/conf.c
+===================================================================
+--- lxc-1.0.8.orig/src/lxc/conf.c	2016-04-19 15:39:52.814324527 +0800
++++ lxc-1.0.8/src/lxc/conf.c	2016-04-19 15:39:52.806324527 +0800
+@@ -2510,11 +2510,17 @@
+ 	struct lxc_list *iterator;
+ 	char *mount_entry;
+ 	int ret;
++	char filename[128] = {0};
+ 
+ 	file = tmpfile();
+ 	if (!file) {
+-		ERROR("tmpfile error: %m");
+-		return -1;
++		WARN("tmpfile error: %m");
++		sprintf(filename, "/.uci/mount.tmp");
++		file = fopen(filename, "w+");
++		if (!file) {
++			ERROR("fopen %s error: %m", filename);
++			return -1;
++		}
+ 	}
+ 
+ 	lxc_list_for_each(iterator, mount) {
+@@ -4941,6 +4947,8 @@
+ 	if (!urange || !grange) {
+ 		ERROR("You do not have subuids or subgids allocated");
+ 		ERROR("Unprivileged containers require subuids and subgids");
++		free(gname);
++		free(uname);
+ 		return;
+ 	}
+ 
+Index: lxc-1.0.8/src/lxc/start.c
+===================================================================
+--- lxc-1.0.8.orig/src/lxc/start.c	2015-11-10 06:49:15.000000000 +0800
++++ lxc-1.0.8/src/lxc/start.c	2016-04-19 15:40:49.414326221 +0800
+@@ -133,6 +133,9 @@
+ 	for (i = 0; i < LXC_NS_MAX; i++) {
+ 		if ((clone_flags & ns_info[i].clone_flag) == 0)
+ 			continue;
++		/* brcm 3.4 kernel does not support */
++		if (ns_info[i].clone_flag == CLONE_NEWNS || ns_info[i].clone_flag == CLONE_NEWPID)
++			continue;
+ 		snprintf(path, MAXPATHLEN, "/proc/%d/ns/%s", pid,
+ 		         ns_info[i].proc_name);
+ 		ns_fd[i] = open(path, O_RDONLY | O_CLOEXEC);

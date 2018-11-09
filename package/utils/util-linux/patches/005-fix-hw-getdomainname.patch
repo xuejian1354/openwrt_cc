@@ -1,0 +1,11 @@
+--- a/term-utils/agetty.c	2016-03-20 22:00:43.850966507 +0800
++++ b/term-utils/agetty.c	2016-03-20 21:02:06.270794332 +0800
+@@ -1385,7 +1385,7 @@
+ 
+ static char *xgetdomainname(void)
+ {
+-#ifdef HAVE_GETDOMAINNAME
++#if 0//def HAVE_GETDOMAINNAME
+ 	char *name;
+ 	size_t sz = get_hostname_max() + 1;
+ 

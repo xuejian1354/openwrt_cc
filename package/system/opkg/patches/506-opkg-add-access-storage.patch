@@ -1,0 +1,61 @@
+--- a/libopkg/pkg.c
++++ b/libopkg/pkg.c
+@@ -110,6 +110,7 @@ pkg_init(pkg_t *pkg)
+      pkg->dbus_version = NULL;
+      pkg->icon_path = NULL;
+      pkg->need_root = 0;
++	 pkg->access_storage = 0;
+      pkg->self_data_uds = NULL;
+      pkg->use_data_uds = NULL;
+      pkg->cpu_share = 128;
+@@ -662,6 +663,9 @@ pkg_formatted_field(FILE *fp, pkg_t *pkg
+ 	  } else if (strcasecmp(field, "Auto-Installed") == 0) {
+ 		if (pkg->auto_installed)
+ 		    fprintf(fp, "Auto-Installed: yes\n");
++	  } else if (strcasecmp(field, "AccessStorage") == 0) {
++		if (pkg->access_storage)
++		    fprintf(fp, "AccessStorage: yes\n");
+ 	  } else {
+ 	       goto UNKNOWN_FMT_FIELD;
+ 	  }
+@@ -1028,6 +1032,7 @@ pkg_formatted_info(FILE *fp, pkg_t *pkg)
+ 	pkg_formatted_field(fp, pkg, "KernelModules");
+ 	pkg_formatted_field(fp, pkg, "ProcRw");
+ 	pkg_formatted_field(fp, pkg, "NeedRoot");
++	pkg_formatted_field(fp, pkg, "AccessStorage");	
+ 	pkg_formatted_field(fp, pkg, "CpuShare");
+ 	pkg_formatted_field(fp, pkg, "MemoryLimit");
+ 	pkg_formatted_field(fp, pkg, "BlkioWeight");
+@@ -1069,6 +1074,7 @@ pkg_print_status(pkg_t * pkg, FILE * fil
+      pkg_formatted_field(file, pkg, "Vendor");
+      pkg_formatted_field(file, pkg, "ProcRw");
+      pkg_formatted_field(file, pkg, "NeedRoot");
++	 pkg_formatted_field(file, pkg, "AccessStorage");
+      pkg_formatted_field(file, pkg, "CpuShare");
+      pkg_formatted_field(file, pkg, "MemoryLimit");
+      pkg_formatted_field(file, pkg, "BlkioWeight");
+--- a/libopkg/pkg.h
++++ b/libopkg/pkg.h
+@@ -157,6 +157,7 @@ struct pkg
+      char *self_data_uds;
+      char *use_data_uds;
+      unsigned int need_root;
++	 unsigned int access_storage;
+      unsigned int cpu_share;
+      unsigned int mem_limit;
+      unsigned int blkio_weight;
+--- a/libopkg/pkg_parse.c
++++ b/libopkg/pkg_parse.c
+@@ -130,7 +130,11 @@ pkg_parse_line(void *ptr, const char *li
+ 			if (strcmp(tmp, "yes") == 0)
+ 			    pkg->auto_installed = 1;
+ 			free(tmp);
+-		}
++		} else if (is_field("AccessStorage", line)) {
++            char *tmp = parse_simple("AccessStorage", line);
++            pkg->access_storage = strtoul(tmp, NULL, 0);
++            free (tmp);
++        }
+ 		break;
+      case 'B':
+ 		if (is_field("BlkioWeight", line)) {

@@ -1,0 +1,82 @@
+--- a/libopkg/pkg.c	2018-02-13 15:25:59.973307717 +0800
++++ b/libopkg/pkg.c	2018-02-13 15:23:28.951595334 +0800
+@@ -113,6 +113,7 @@
+      pkg->tcp_ports_count = 0;
+      pkg->udp_ports_str = NULL;
+      pkg->udp_ports_count = 0;
++     pkg->same_ntwk_ns = 0;
+      pkg->need_root = 0;
+      pkg->need_gwvendor = 0;
+      pkg->access_storage = 0;
+@@ -955,6 +956,10 @@
+                }
+                fprintf(fp, "\n");
+            }
++	  } else if (strcasecmp(field, "SameNtwkNS") == 0) {
++    	  if (pkg->same_ntwk_ns) {
++    		  fprintf(fp, "SameNtwkNS: %u\n", pkg->same_ntwk_ns);
++      } 
+ 	  } else {
+ 	       goto UNKNOWN_FMT_FIELD;
+ 	  }
+@@ -1075,18 +1080,19 @@
+ 	pkg_formatted_field(fp, pkg, "UseDataUds");
+ 	pkg_formatted_field(fp, pkg, "KernelModules");
+ 	pkg_formatted_field(fp, pkg, "ProcRw");
++	pkg_formatted_field(fp, pkg, "SameNtwkNS");
+ 	pkg_formatted_field(fp, pkg, "NeedRoot");
+-        pkg_formatted_field(fp, pkg, "NeedGWVendor");
+-        pkg_formatted_field(fp, pkg, "MaxProcNum");
+-        pkg_formatted_field(fp, pkg, "MaxFileNum");
++    pkg_formatted_field(fp, pkg, "NeedGWVendor");
++    pkg_formatted_field(fp, pkg, "MaxProcNum");
++    pkg_formatted_field(fp, pkg, "MaxFileNum");
+ 	pkg_formatted_field(fp, pkg, "AccessStorage");	
+ 	pkg_formatted_field(fp, pkg, "CpuShare");
+ 	pkg_formatted_field(fp, pkg, "MemoryLimit");
+ 	pkg_formatted_field(fp, pkg, "BlkioWeight");
+-        pkg_formatted_field(fp, pkg, "PluginPriority");
+-        pkg_formatted_field(fp, pkg, "MaxStorageSize");
+-        pkg_formatted_field(fp, pkg, "UdpPorts");
+-        pkg_formatted_field(fp, pkg, "TcpPorts");
++    pkg_formatted_field(fp, pkg, "PluginPriority");
++    pkg_formatted_field(fp, pkg, "MaxStorageSize");
++    pkg_formatted_field(fp, pkg, "UdpPorts");
++    pkg_formatted_field(fp, pkg, "TcpPorts");
+ 
+ 	fputs("\n", fp);
+ }
+@@ -1125,6 +1131,7 @@
+      pkg_formatted_field(file, pkg, "KernelModules");
+      pkg_formatted_field(file, pkg, "Vendor");
+      pkg_formatted_field(file, pkg, "ProcRw");
++     pkg_formatted_field(file, pkg, "SameNtwkNS");
+      pkg_formatted_field(file, pkg, "NeedRoot");
+      pkg_formatted_field(file, pkg, "NeedGWVendor");
+      pkg_formatted_field(file, pkg, "AccessStorage");
+--- a/libopkg/pkg.h	2018-02-13 15:25:59.973307717 +0800
++++ b/libopkg/pkg.h	2018-02-13 15:15:42.588556377 +0800
+@@ -155,6 +155,7 @@
+ 
+      char *self_data_uds;
+      char *use_data_uds;
++     unsigned int same_ntwk_ns;
+      unsigned int need_root;
+      unsigned int need_gwvendor;
+      unsigned int access_storage;
+--- a/libopkg/pkg_parse.c	2018-02-13 15:25:59.973307717 +0800
++++ b/libopkg/pkg_parse.c	2018-02-13 15:20:07.879650638 +0800
+@@ -291,7 +291,12 @@
+ 		else if (is_field("SubscribeEvent", line))
+ 			pkg->subscribe_event_str = parse_list(line, &pkg->subscribe_event_count, ' ', 0);
+ 		else if (is_field("SelfDataUds", line))
+-                        pkg->self_data_uds = parse_simple("SelfDataUds", line);
++            pkg->self_data_uds = parse_simple("SelfDataUds", line);
++		else if (is_field("SameNtwkNS", line)) {
++            char *tmp = parse_simple("SameNtwkNS", line);
++            pkg->same_ntwk_ns = strtoul(tmp, NULL, 0);
++            free (tmp);
++        }
+ 		break;
+ 
+ 	case 'T':

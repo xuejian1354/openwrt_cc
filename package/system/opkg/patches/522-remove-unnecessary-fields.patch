@@ -1,0 +1,78 @@
+--- a/libopkg/pkg.c	2018-02-22 17:13:08.364621893 +0800
++++ b/libopkg/pkg.c	2018-03-09 19:25:42.059277416 +0800
+@@ -1069,31 +1069,6 @@
+ 	pkg_formatted_field(fp, pkg, "Installed-Time");
+ 	pkg_formatted_field(fp, pkg, "Tags");
+ 
+-	pkg_formatted_field(fp, pkg, "Capabilities");
+-	pkg_formatted_field(fp, pkg, "SelfInterface");
+-	pkg_formatted_field(fp, pkg, "UseInterface");
+-	pkg_formatted_field(fp, pkg, "UseGwSystemPath");
+-	pkg_formatted_field(fp, pkg, "SubscribeEvent");
+-
+-	pkg_formatted_field(fp, pkg, "Vendor");
+-	pkg_formatted_field(fp, pkg, "SelfDataUds");
+-	pkg_formatted_field(fp, pkg, "UseDataUds");
+-	pkg_formatted_field(fp, pkg, "KernelModules");
+-	pkg_formatted_field(fp, pkg, "ProcRw");
+-	pkg_formatted_field(fp, pkg, "SameNtwkNS");
+-	pkg_formatted_field(fp, pkg, "NeedRoot");
+-    pkg_formatted_field(fp, pkg, "NeedGWVendor");
+-    pkg_formatted_field(fp, pkg, "MaxProcNum");
+-    pkg_formatted_field(fp, pkg, "MaxFileNum");
+-	pkg_formatted_field(fp, pkg, "AccessStorage");	
+-	pkg_formatted_field(fp, pkg, "CpuShare");
+-	pkg_formatted_field(fp, pkg, "MemoryLimit");
+-	pkg_formatted_field(fp, pkg, "BlkioWeight");
+-    pkg_formatted_field(fp, pkg, "PluginPriority");
+-    pkg_formatted_field(fp, pkg, "MaxStorageSize");
+-    pkg_formatted_field(fp, pkg, "UdpPorts");
+-    pkg_formatted_field(fp, pkg, "TcpPorts");
+-
+ 	fputs("\n", fp);
+ }
+ 
+@@ -1106,6 +1081,9 @@
+ 
+      pkg_formatted_field(file, pkg, "Package");
+      pkg_formatted_field(file, pkg, "Version");
++     pkg_formatted_field(file, pkg, "DbusVersion");
++     pkg_formatted_field(file, pkg, "SelfInterface");
++     pkg_formatted_field(file, pkg, "UseInterface");
+      pkg_formatted_field(file, pkg, "Depends");
+      pkg_formatted_field(file, pkg, "Recommends");
+      pkg_formatted_field(file, pkg, "Suggests");
+@@ -1119,33 +1097,6 @@
+      pkg_formatted_field(file, pkg, "Installed-Time");
+      pkg_formatted_field(file, pkg, "Auto-Installed");
+ 
+-     //DDBBGG
+-     pkg_formatted_field(file, pkg, "DbusVersion");
+-     pkg_formatted_field(file, pkg, "Capabilities");
+-     pkg_formatted_field(file, pkg, "SelfInterface");
+-     pkg_formatted_field(file, pkg, "UseInterface");
+-     pkg_formatted_field(file, pkg, "UseGwSystemPath");
+-     pkg_formatted_field(file, pkg, "SubscribeEvent");
+-     pkg_formatted_field(file, pkg, "SelfDataUds");
+-     pkg_formatted_field(file, pkg, "UseDataUds");
+-     pkg_formatted_field(file, pkg, "KernelModules");
+-     pkg_formatted_field(file, pkg, "Vendor");
+-     pkg_formatted_field(file, pkg, "ProcRw");
+-     pkg_formatted_field(file, pkg, "SameNtwkNS");
+-     pkg_formatted_field(file, pkg, "NeedRoot");
+-     pkg_formatted_field(file, pkg, "NeedGWVendor");
+-     pkg_formatted_field(file, pkg, "AccessStorage");
+-     pkg_formatted_field(file, pkg, "MaxProcNum");               
+-     pkg_formatted_field(file, pkg, "MaxFileNum");
+-     pkg_formatted_field(file, pkg, "CpuShare");
+-     pkg_formatted_field(file, pkg, "MemoryLimit");
+-     pkg_formatted_field(file, pkg, "BlkioWeight");
+-     pkg_formatted_field(file, pkg, "PluginPriority");
+-     pkg_formatted_field(file, pkg, "MaxStorageSize");
+-     pkg_formatted_field(file, pkg, "UdpPorts");
+-     pkg_formatted_field(file, pkg, "TcpPorts");
+-
+-
+      fputs("\n", file);
+ }
+ 

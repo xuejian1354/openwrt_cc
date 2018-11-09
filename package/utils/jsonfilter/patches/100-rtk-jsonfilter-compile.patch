@@ -1,0 +1,15 @@
+--- a/CMakeLists.txt	2015-11-14 07:57:12.000000000 +0800
++++ b/CMakeLists.txt	2016-01-15 07:51:03.442482604 +0800
+@@ -37,6 +37,12 @@
+   COMMENT "Generating parser.c"
+ )
+ 
++find_path(JSON_PATH json-c/json.h
++	HINTS ${STAGING_DIR}/usr/include)
++IF(JSON_PATH)
++INCLUDE_DIRECTORIES(${JSON_PATH})
++ENDIF()
++
+ SET_PROPERTY(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "lemon;parser.h;parser.out")
+ SET_SOURCE_FILES_PROPERTIES("parser.c" PROPERTIES GENERATED TRUE)
+ ADD_EXECUTABLE(jsonpath main.c ast.c lexer.c parser.c matcher.c)

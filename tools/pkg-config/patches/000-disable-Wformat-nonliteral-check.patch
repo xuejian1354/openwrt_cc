@@ -1,0 +1,14 @@
+--- a/glib/glib/gdate.c.orig	2017-02-21 22:29:10.027112718 -0800
++++ b/glib/glib/gdate.c	2017-02-21 22:31:12.832847607 -0800
+@@ -2494,7 +2494,11 @@
+        * recognize whether strftime actually failed or just returned "".
+        */
+       tmpbuf[0] = '\1';
++
++      #pragma GCC diagnostic push
++      #pragma GCC diagnostic ignored "-Wformat-nonliteral"
+       tmplen = strftime (tmpbuf, tmpbufsize, locale_format, &tm);
++      #pragma GCC diagnostic pop
+ 
+       if (tmplen == 0 && tmpbuf[0] != '\0')
+         {

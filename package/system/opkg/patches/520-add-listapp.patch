@@ -1,0 +1,80 @@
+Index: opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/opkg_cmd.c
+===================================================================
+--- opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d.orig/libopkg/opkg_cmd.c	2017-04-24 15:32:47.686218522 +0800
++++ opkg-9c97d5ecd795709c8584e972bfdf3aee3a5b846d/libopkg/opkg_cmd.c	2017-04-24 15:33:51.262220075 +0800
+@@ -56,6 +56,30 @@
+ 	free(version);
+ }
+ 
++static void print_app_pkg(pkg_t *pkg)
++{
++	int i = 0;
++	printf("%s ", pkg->name);
++	if (pkg->use_interface_count == 0) {
++		printf("%s ", "norequire");
++	} else {
++		for (i = 0; i < pkg->use_interface_count; i++) {
++			printf("%s%s", i == 0 ? "" : ",", pkg->use_interface_str[i]);
++		}
++		printf(" ");
++	}
++
++	if (pkg->self_interface_count == 0) {
++		printf("%s ", "noprovide");
++	} else {
++		for (i = 0; i < pkg->self_interface_count; i++) {
++			printf("%s%s", i == 0 ? "" : ",", pkg->self_interface_str[i]);
++		}
++	}
++	printf("\n");
++}
++
++
+ int opkg_state_changed;
+ 
+ static void
+@@ -577,6 +601,36 @@
+ 	return opkg_list_find_cmd(argc, argv, 1);
+ }
+ 
++static int
++opkg_listapp_cmd(int argc, char **argv)
++{
++	int i;
++	pkg_vec_t *available;
++	pkg_t *pkg;
++	char *pkg_name = NULL;
++	
++	if (argc > 0) {
++	 pkg_name = argv[0];
++	}
++	available = pkg_vec_alloc();
++	pkg_hash_fetch_available(available);
++	pkg_vec_sort(available, pkg_compare_names);
++	for (i=0; i < available->len; i++) {
++	 pkg = available->pkgs[i];
++	 if (!pkg->dbus_version)
++	 	continue;
++	 
++	 /* if we have package name or pattern and pkg does not match, then skip it */
++	 if (pkg_name && fnmatch(pkg_name, pkg->name, conf->nocase) &&
++		 (!pkg->description || fnmatch(pkg_name, pkg->description, conf->nocase)))
++		  continue;
++		 print_app_pkg(pkg);
++	}
++	pkg_vec_free(available);
++	
++	return 0;
++}
++
+ 
+ static int
+ opkg_list_installed_cmd(int argc, char **argv)
+@@ -1206,6 +1260,7 @@
+      {"update", 0, (opkg_cmd_fun_t)opkg_update_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+      {"dXBncmFkZQ==", 1, (opkg_cmd_fun_t)opkg_upgrade_cmd, PFM_DESCRIPTION|PFM_SOURCE},
+      {"list", 0, (opkg_cmd_fun_t)opkg_list_cmd, PFM_SOURCE},
++     {"listapp", 0, (opkg_cmd_fun_t)opkg_listapp_cmd, PFM_SOURCE},
+      {"list_installed", 0, (opkg_cmd_fun_t)opkg_list_installed_cmd, PFM_SOURCE},
+      {"list-installed", 0, (opkg_cmd_fun_t)opkg_list_installed_cmd, PFM_SOURCE},
+      {"list_upgradable", 0, (opkg_cmd_fun_t)opkg_list_upgradable_cmd, PFM_SOURCE},

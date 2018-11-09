@@ -1,0 +1,88 @@
+--- a/libopkg/pkg.h	2016-08-11 09:10:53.231942216 +0800
++++ b/libopkg/pkg.h	2016-08-11 09:52:49.172003687 +0800
+@@ -162,6 +162,11 @@
+      unsigned int blkio_weight;
+      unsigned int max_storage_size;
+      char *plugin_priority;
++     char **tcp_ports_str;
++     unsigned int tcp_ports_count;
++     char **udp_ports_str;
++     unsigned int udp_ports_count;
++
+      
+      char **kernel_mods_str;
+      unsigned int kernel_mods_count;
+--- a/libopkg/pkg.c	2016-08-11 09:10:53.231942216 +0800
++++ b/libopkg/pkg.c	2016-08-11 09:59:54.436234571 +0800
+@@ -109,6 +109,10 @@
+      pkg->vendor = NULL;
+      pkg->dbus_version = NULL;
+      pkg->plugin_priority = NULL;
++     pkg->tcp_ports_str = NULL;
++     pkg->tcp_ports_count = 0;
++     pkg->udp_ports_str = NULL;
++     pkg->udp_ports_count = 0;
+      pkg->need_root = 0;
+ 	 pkg->access_storage = 0;
+      pkg->self_data_uds = NULL;
+@@ -946,7 +950,18 @@
+ 	       if (pkg->tags) {
+                    fprintf(fp, "Tags: %s\n", pkg->tags);
+ 	       }
+-	  }
++	  } else if (strcasecmp(field, "TcpPorts") == 0) {
++           if (pkg->tcp_ports_count) {
++               fprintf(fp, "TcpPorts:");
++               for (i = 0; i < pkg->tcp_ports_count; i++) {
++                   pkg_fix_field_value(pkg->tcp_ports_str[i]);
++                   fprintf(fp, "%s %s", i == 0 ? "" : " ", pkg->tcp_ports_str[i]);
++               }
++               fprintf(fp, "\n");
++           }
++      } else {
++           goto UNKNOWN_FMT_FIELD;
++      }
+ 	  break;
+       case 'u':
+       case 'U':
+@@ -972,6 +987,15 @@
+                if (pkg->use_data_uds) {
+                        fprintf(fp, "UseDataUds: %s\n", pkg->use_data_uds);
+                }
++          } else if (strcasecmp(field, "UdpPorts") == 0) {
++               if (pkg->udp_ports_count) {
++                   fprintf(fp, "UdpPorts:");
++                   for (i = 0; i < pkg->udp_ports_count; i++) {
++                       pkg_fix_field_value(pkg->udp_ports_str[i]);
++                       fprintf(fp, "%s %s", i == 0 ? "" : " ", pkg->udp_ports_str[i]);
++                   }
++                   fprintf(fp, "\n");
++               }
+           } else {
+                goto UNKNOWN_FMT_FIELD;
+           }
+--- a/libopkg/pkg_parse.c	2016-08-11 09:10:53.231942216 +0800
++++ b/libopkg/pkg_parse.c	2016-08-11 10:03:53.060124529 +0800
+@@ -283,16 +283,20 @@
+ 	case 'T':
+ 		if ((mask & PFM_TAGS) && is_field("Tags", line))
+ 			pkg->tags = parse_simple("Tags", line);
++		else if (is_field("TcpPorts", line))
++            pkg->tcp_ports_str = parse_list(line, &pkg->tcp_ports_count, ' ', 0);
+ 		break;
+ 
+-         case 'U':
++    case 'U':
+ 		if (is_field("UseInterface", line))
+                      pkg->use_interface_str = parse_list(line, &pkg->use_interface_count, ' ', 0);
+ 		else if (is_field("UseGwSystemPath", line))
+                      pkg->use_gwsys_path_str = parse_list(line, &pkg->use_gwsys_path_count, ' ', 0);		
+ 		else if (is_field("UseDataUds", line))
+                         pkg->use_data_uds = parse_simple("UseDataUds", line);
+-		break;
++        else if (is_field("UdpPorts", line))
++            pkg->udp_ports_str = parse_list(line, &pkg->udp_ports_count, ' ', 0);
++        break;		
+ 	case 'V':
+ 		if ((mask & PFM_VERSION) && is_field("Version", line))
+ 			parse_version(pkg, line);

@@ -1,0 +1,388 @@
+--- a/gio/gdbusconnection.c
++++ b/gio/gdbusconnection.c
+@@ -4064,6 +4064,221 @@ has_object_been_unregistered (GDBusConne
+   return ret;
+ }
+ 
++#ifdef CTSGW_LIB_SUPPORT
++
++static gboolean
++interface_has_writable_properties (GDBusInterfaceInfo *interface_info)
++{
++  gint i;
++
++  if (!interface_info->properties)
++    return FALSE;
++
++  for (i = 0; interface_info->properties[i]; i++)
++    if (interface_info->properties[i]->flags & G_DBUS_PROPERTY_INFO_FLAGS_WRITABLE)
++      return TRUE;
++
++  return FALSE;
++}
++
++typedef struct
++{
++  GDBusConnection *connection;
++  GDBusMessage *message;
++  gpointer user_data;
++  const GDBusInterfaceVTable *vtable;
++  GDBusInterfaceInfo *interface_info;
++  guint registration_id;
++  guint subtree_registration_id;
++} PropertySetMultiData;
++
++static void
++property_set_multi_data_free (PropertySetMultiData *data)
++{
++  g_object_unref (data->connection);
++  g_object_unref (data->message);
++  g_free (data);
++}
++
++/* called in thread where object was registered - no locks held */
++static gboolean
++invoke_set_multi_properties_in_idle_cb (gpointer _data)
++{
++  PropertySetMultiData *data = _data;
++  GDBusMessage *reply;
++  GVariant  *dict;
++  GVariantIter  iter;
++  gchar *property_name, *interface_name;
++  GVariant *property_value;
++  guint  err_num = 0;
++  gchar *err_msg;
++
++  g_variant_get (g_dbus_message_get_body (data->message),
++                 "(&s@a{sv})", 
++                 &interface_name,
++                 &dict);
++
++  if (has_object_been_unregistered (data->connection,
++                                    data->registration_id,
++                                    data->subtree_registration_id))
++    {
++      reply = g_dbus_message_new_method_error (data->message,
++                                               "org.freedesktop.DBus.Error.UnknownMethod",
++                                               _("No such interface 'com.ctc.igd1.Properties' on object at path %s"),
++                                               g_dbus_message_get_path (data->message));
++      g_dbus_connection_send_message (data->connection, reply, G_DBUS_SEND_MESSAGE_FLAGS_NONE, NULL, NULL);
++      g_object_unref (reply);
++      goto out;
++    }
++
++  g_variant_iter_init (&iter, dict);
++  while ( g_variant_iter_next (&iter, "{&sv}", &property_name, &property_value) )
++    {
++        if ( !data->vtable->set_property (data->connection,
++                                      g_dbus_message_get_sender (data->message),
++                                      g_dbus_message_get_path (data->message),
++                                      data->interface_info->name,
++                                      property_name,
++                                      property_value,
++                                      NULL,
++                                      data->user_data ))
++        {
++            ++ err_num ;
++        }
++        g_variant_unref (property_value);
++    }
++
++  if (err_num > 0)
++    {
++        err_msg = g_strdup_printf("%d parameters set failed.", err_num);
++        reply = g_dbus_message_new_method_error_literal (data->message,
++                                                          "SetMulti error:",
++                                                          err_msg );
++        g_free( err_msg );
++        err_num = 0; 
++    }
++    else
++    {
++        reply = g_dbus_message_new_method_reply (data->message);
++    }
++
++  g_assert (reply != NULL);
++  g_dbus_connection_send_message (data->connection, reply, G_DBUS_SEND_MESSAGE_FLAGS_NONE, NULL, NULL);
++  g_object_unref (reply);
++
++ out:
++  g_variant_unref (dict);
++    
++  return FALSE;
++}
++
++/* called in any thread with connection's lock held */
++static gboolean
++validate_and_maybe_schedule_property_set_multi (GDBusConnection            *connection,
++                                                GDBusMessage               *message,
++                                                guint                       registration_id,
++                                                guint                       subtree_registration_id,
++                                                GDBusInterfaceInfo         *interface_info,
++                                                const GDBusInterfaceVTable *vtable,
++                                                GMainContext               *main_context,
++                                                gpointer                    user_data)
++{
++     gboolean handled;
++     GSource *idle_source;
++     PropertySetMultiData *property_set_multi_data;
++    
++     handled = FALSE;
++    
++     if (vtable == NULL)
++       goto out;
++
++     // TODO:
++   
++     /* If the vtable pointer for set_property() is NULL but we have a
++      * non-zero number of readable properties, then dispatch the call via
++      * the method_call() handler.
++      */
++     if (vtable->set_property== NULL && interface_has_writable_properties (interface_info))
++       {
++         schedule_method_call (connection, message, registration_id, subtree_registration_id,
++                               interface_info, NULL, NULL, g_dbus_message_get_body (message),
++                               vtable, main_context, user_data);
++         handled = TRUE;
++         goto out;
++       }
++
++     /* ok, got the property info - call user in an idle handler */
++     property_set_multi_data = g_new0 (PropertySetMultiData, 1);
++     property_set_multi_data->connection = g_object_ref (connection);
++     property_set_multi_data->message = g_object_ref (message);
++     property_set_multi_data->user_data = user_data;
++     property_set_multi_data->vtable = vtable;
++     property_set_multi_data->interface_info = interface_info;
++     property_set_multi_data->registration_id = registration_id;
++     property_set_multi_data->subtree_registration_id = subtree_registration_id;
++    
++     idle_source = g_idle_source_new ();
++     g_source_set_priority (idle_source, G_PRIORITY_DEFAULT);
++     g_source_set_callback (idle_source,
++                            invoke_set_multi_properties_in_idle_cb,
++                            property_set_multi_data,
++                            (GDestroyNotify) property_set_multi_data_free);
++     g_source_set_name (idle_source, "[gio] ctsgw_invoke_set_multi_properties_in_idle_cb");
++     g_source_attach (idle_source, main_context);
++     g_source_unref (idle_source);
++    
++     handled = TRUE;
++
++ out:
++  return handled;
++}
++
++
++static gboolean
++handle_set_multi_properties (GDBusConnection *connection,
++                             ExportedObject  *eo,
++                             GDBusMessage    *message)
++{
++  ExportedInterface *ei;
++  gboolean handled;
++  const char *interface_name;
++
++  handled = FALSE;
++
++  g_variant_get (g_dbus_message_get_body (message),
++                 "(&sv)",
++                 &interface_name, NULL);
++
++  /* Fail with org.freedesktop.DBus.Error.InvalidArgs if there is
++   * no such interface registered
++   */
++  ei = g_hash_table_lookup (eo->map_if_name_to_ei, interface_name);
++  if (ei == NULL)
++    {
++      GDBusMessage *reply;
++      reply = g_dbus_message_new_method_error (message,
++                                               "org.freedesktop.DBus.Error.InvalidArgs",
++                                               _("No such interface '%s'"),
++                                               interface_name);
++      g_dbus_connection_send_message_unlocked (eo->connection, reply, G_DBUS_SEND_MESSAGE_FLAGS_NONE, NULL, NULL);
++      g_object_unref (reply);
++      handled = TRUE;
++      goto out;
++    }
++
++  handled = validate_and_maybe_schedule_property_set_multi (eo->connection,
++                                                            message,
++                                                            ei->id,
++                                                            0,
++                                                            ei->interface_info,
++                                                            ei->vtable,
++                                                            ei->context,
++                                                            ei->user_data);
++ out:
++  return handled;
++}
++#endif
++
+ /* ---------------------------------------------------------------------------------------------------- */
+ 
+ typedef struct
+@@ -4667,6 +4882,37 @@ static const gchar introspect_introspect
+   "    </method>\n"
+   "  </interface>\n";
+ 
++
++#ifdef CTSGW_LIB_SUPPORT
++static const gchar introspect_ctc_interface[] = 
++    "  <interface name=\"com.ctc.igd1.Properties\">\n"
++    "    <method name=\"Get\">\n"
++    "      <arg type=\"s\" name=\"interface_name\" direction=\"in\"/>\n"
++    "      <arg type=\"s\" name=\"property_name\" direction=\"in\"/>\n"
++    "      <arg type=\"v\" name=\"value\" direction=\"out\"/>\n"
++    "    </method>\n"
++    "    <method name=\"GetAll\">\n"
++    "      <arg type=\"s\" name=\"interface_name\" direction=\"in\"/>\n"
++    "      <arg type=\"a{sv}\" name=\"properties\" direction=\"out\"/>\n"
++    "    </method>\n"
++    "    <method name=\"Set\">\n"
++    "      <arg type=\"s\" name=\"interface_name\" direction=\"in\"/>\n"
++    "      <arg type=\"s\" name=\"property_name\" direction=\"in\"/>\n"
++    "      <arg type=\"v\" name=\"value\" direction=\"in\"/>\n"
++    "    </method>\n"
++    "    <method name=\"SetMulti\">\n"
++    "      <arg type=\"s\" name=\"interface_name\" direction=\"in\"/>\n"
++    "      <arg type=\"a{sv}\" name=\"properties\" direction=\"in\"/>\n"
++    "    </method>\n"
++    "    <signal name=\"PropertiesChanged\">\n"
++    "      <arg type=\"s\" name=\"interface_name\"/>\n"
++    "      <arg type=\"a{sv}\" name=\"changed_properties\"/>\n"
++    "      <arg type=\"as\" name=\"invalidated_properties\"/>\n"
++    "    </signal>\n"
++    "  </interface>\n";
++
++#endif
++
+ static void
+ introspect_append_header (GString *s)
+ {
+@@ -4768,6 +5014,9 @@ handle_introspect (GDBusConnection *conn
+   s = g_string_sized_new (sizeof (introspect_header) +
+                           sizeof (introspect_properties_interface) +
+                           sizeof (introspect_introspectable_interface) +
++#ifdef CTSGW_LIB_SUPPORT
++                          sizeof (introspect_ctc_interface) +
++#endif
+                           sizeof (introspect_tail));
+   introspect_append_header (s);
+   if (!g_hash_table_lookup (eo->map_if_name_to_ei,
+@@ -4778,6 +5027,12 @@ handle_introspect (GDBusConnection *conn
+                             "org.freedesktop.DBus.Introspectable"))
+     g_string_append (s, introspect_introspectable_interface);
+ 
++#ifdef CTSGW_LIB_SUPPORT
++    if (!g_hash_table_lookup (eo->map_if_name_to_ei,
++                              "com.ctc.igd1.Properties"))
++      g_string_append (s, introspect_ctc_interface);
++#endif
++
+   /* then include the registered interfaces */
+   g_hash_table_iter_init (&hash_iter, eo->map_if_name_to_ei);
+   while (g_hash_table_iter_next (&hash_iter, NULL, (gpointer) &ei))
+@@ -5044,6 +5299,38 @@ obj_message_func (GDBusConnection *conne
+       goto out;
+     }
+ 
++#ifdef CTSGW_LIB_SUPPORT
++ else if (g_strcmp0 (interface_name, "com.ctc.igd1.Properties") == 0 &&
++          g_strcmp0 (member, "Get") == 0 &&
++          g_strcmp0 (signature, "ss") == 0)
++   {
++     handled = handle_getset_property (connection, eo, message, TRUE);
++     goto out;
++   }
++ else if (g_strcmp0 (interface_name, "com.ctc.igd1.Properties") == 0 &&
++          g_strcmp0 (member, "Set") == 0 &&
++          g_strcmp0 (signature, "ssv") == 0)
++   {
++     handled = handle_getset_property (connection, eo, message, FALSE);
++     goto out;
++   }
++ else if (g_strcmp0 (interface_name, "com.ctc.igd1.Properties") == 0 &&
++          g_strcmp0 (member, "GetAll") == 0 &&
++          g_strcmp0 (signature, "s") == 0)
++   {
++     handled = handle_get_all_properties (connection, eo, message);
++     goto out;
++   }
++ else if (g_strcmp0 (interface_name, "com.ctc.igd1.Properties") == 0 &&
++          g_strcmp0 (member, "SetMulti") == 0 &&
++          g_strcmp0 (signature, "sa{sv}") == 0)
++   {
++     handled = handle_set_multi_properties (connection, eo, message);
++     goto out;
++   }
++ 
++#endif
++
+  out:
+   return handled;
+ }
+--- a/gio/gdbusconnection.h
++++ b/gio/gdbusconnection.h
+@@ -413,6 +413,44 @@ GLIB_AVAILABLE_IN_ALL
+ gboolean         g_dbus_connection_unregister_object          (GDBusConnection            *connection,
+                                                                guint                       registration_id);
+ 
++#ifdef CTSGW_LIB_SUPPORT
++
++typedef int (* CtSgwDBusPropSetFunction) ( const char *path,
++                                           const char *prop,
++                                           GVariant *value,
++                                           void *userdata);
++
++typedef int (* CtSgwDBusPropGetFunction) ( const char	*path,
++                                           const char	*prop,
++                                           GVariant    **value,
++                                           void         *userdata);
++
++typedef int (* CtSgwDBusPropGetAllFunction) ( const char *path,
++                                              GVariant  **value,
++                                              void       *userdata);
++
++typedef int (* CtSgwDBusPropSetMultiFunction) ( const char     *path,
++                                                GVariant       *value,
++                                                void           *userdata);
++
++typedef int (* CtSgwDBusMethodFunction) ( const char    *path,
++                                          const char    *interface,
++                                          const char    *method,
++                                          GVariant      *inargs,
++                                          GVariant     **outargs,
++                                          void	        *userdata);
++
++struct _CtSgwGDBusInterfaceVTable
++{
++    CtSgwDBusMethodFunction     method_func;
++    CtSgwDBusPropGetFunction    get_func;
++    CtSgwDBusPropSetFunction    set_func;
++    CtSgwDBusPropGetAllFunction getall_func;
++    CtSgwDBusPropSetMultiFunction   setmulti_func;
++} ;
++
++#endif
++
+ /* ---------------------------------------------------------------------------------------------------- */
+ 
+ /**
+--- a/gio/giotypes.h
++++ b/gio/giotypes.h
+@@ -558,6 +558,14 @@ typedef struct _GDBusPropertyInfo
+ typedef struct _GDBusInterfaceInfo            GDBusInterfaceInfo;
+ typedef struct _GDBusNodeInfo                 GDBusNodeInfo;
+ 
++#ifndef CTSGW_LIB_SUPPORT
++#define CTSGW_LIB_SUPPORT
++#endif
++
++#ifdef CTSGW_LIB_SUPPORT
++typedef struct _CtSgwGDBusInterfaceVTable     CtSgwGDBusInterfaceVTable_t;
++#endif
++
+ /**
+  * GCancellableSourceFunc:
+  * @cancellable: the #GCancellable

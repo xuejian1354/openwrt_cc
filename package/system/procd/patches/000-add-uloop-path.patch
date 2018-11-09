@@ -1,0 +1,14 @@
+--- a/CMakeLists.txt	2015-11-24 16:33:42.000000000 +0800
++++ b/CMakeLists.txt	2016-01-15 20:24:55.751651644 +0800
+@@ -42,6 +42,11 @@
+ 	RUNTIME DESTINATION sbin
+ )
+ 
++find_path(ULOOP_PATH libubox/uloop.h
++      HINTS ${STAGING_DIR}/usr/include)
++IF(ULOOP_PATH)
++INCLUDE_DIRECTORIES(${ULOOP_PATH})
++ENDIF()
+ 
+ ADD_EXECUTABLE(init initd/init.c initd/early.c initd/preinit.c initd/mkdev.c watchdog.c
+ 	utils/utils.c ${SOURCES_ZRAM})

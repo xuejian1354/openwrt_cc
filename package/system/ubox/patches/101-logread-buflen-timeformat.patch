@@ -1,0 +1,69 @@
+--- a/log/logread.c	2017-02-07 13:52:45.000000000 +0800
++++ b/log/logread.c	2017-02-07 14:11:28.647374188 +0800
+@@ -12,6 +12,7 @@
+  * GNU General Public License for more details.
+  */
+ 
++#define _GNU_SOURCE
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ 
+@@ -100,12 +101,13 @@
+ {
+ 	struct blob_attr *tb[__LOG_MAX];
+ 	struct stat s;
+-	char buf[512];
++	char buf[1026] = {0};
+ 	char buf_ts[32];
+ 	uint32_t p;
+ 	char *str;
+ 	time_t t;
+ 	uint32_t t_ms = 0;
++	struct tm local_tm;
+ 	char *c, *m;
+ 	int ret = 0;
+ 
+@@ -139,12 +141,17 @@
+ 	t = blobmsg_get_u64(tb[LOG_TIME]) / 1000;
+ 	if (log_timestamp) {
+ 		t_ms = blobmsg_get_u64(tb[LOG_TIME]) % 1000;
+-		snprintf(buf_ts, sizeof(buf_ts), "[%lu.%03u] ",
+-				(unsigned long)t, t_ms);
++		snprintf(buf_ts, sizeof(buf_ts), ".%03u", t_ms);
+ 	}
+-	c = ctime(&t);
++	//c = ctime(&t);
++	
++	localtime_r(&t, &local_tm);
++	asprintf(&c, "%04d-%02d-%02d %02d:%02d:%02d", 
++		local_tm.tm_year + 1900, local_tm.tm_mon + 1, local_tm.tm_mday,
++		local_tm.tm_hour, local_tm.tm_min, local_tm.tm_sec);
++	
+ 	p = blobmsg_get_u32(tb[LOG_PRIO]);
+-	c[strlen(c) - 1] = '\0';
++	//c[strlen(c) - 1] = '\0';
+ 	str = blobmsg_format_json(msg, true);
+ 	if (log_type == LOG_NET) {
+ 		int err;
+@@ -183,15 +190,18 @@
+ 			uloop_timeout_set(&retry, 1000);
+ 		}
+ 	} else {
+-		snprintf(buf, sizeof(buf), "%s %s%s.%s%s %s\n",
+-			c, log_timestamp ? buf_ts : "",
+-			getcodetext(LOG_FAC(p) << 3, facilitynames),
++		snprintf(buf, sizeof(buf), "%s%s %s.%s%s %s\n",
++			c, log_timestamp ? buf_ts : "", 
++			getcodetext(LOG_FAC(p) << 3, facilitynames), 
+ 			getcodetext(LOG_PRI(p), prioritynames),
+ 			(blobmsg_get_u32(tb[LOG_SOURCE])) ? ("") : (" kernel:"), m);
++		if (buf[1024] != '\n' && buf[1024] != '\0')
++			buf[1024] = '\n';
+ 		ret = write(sender.fd, buf, strlen(buf));
+ 	}
+ 
+ 	free(str);
++	free(c);
+ 	if (log_type == LOG_FILE)
+ 		fsync(sender.fd);
+ 

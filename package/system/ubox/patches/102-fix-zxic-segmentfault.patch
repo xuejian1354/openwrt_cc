@@ -1,0 +1,10 @@
+--- a/kmodloader.c	2017-01-20 16:54:38.000000000 +0800
++++ b/kmodloader.c	2017-01-20 17:56:31.140056829 +0800
+@@ -695,6 +695,7 @@
+ 	for (len = 0, i = 2; i < argc; i++)
+ 		len += strlen(argv[i]) + 1;
+ 
++	if (!len) len++;
+ 	options = malloc(len);
+ 	options[0] = 0;
+ 	cur = options;
