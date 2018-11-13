@@ -30,5 +30,5 @@ try_hg() {
 	[ -n "$REV" ]
 }
 
-try_version || try_svn || try_git || try_hg || REV="unknown"
+try_version || try_git || try_hg || REV="unknown"
 echo "$REV"
