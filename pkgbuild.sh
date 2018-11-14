@@ -86,27 +86,17 @@ generate_app_json() {
 # ctc-pkg-build "main"
 ###
 ogargs="--owner=0 --group=0"
-usage="Usage: $0 <ipk_path> <icon_path> <icon1_path> [vendor]"
+usage="Usage: $0 <ipk_path> [vendor]"
 
 
 # continue on to process additional arguments
-if [ $# -ne 3 ] && [ $# -ne 4 ]; then
+if [ $# -ne 1 ] && [ $# -ne 2 ]; then
         echo $usage  >&2
         exit 1
 fi
 
 if [ ! -f $1 ]; then
 	echo "*** Error: ipk file $1 does not exist." >&2
-        exit 1
-fi
-
-if [ ! -f $2 ]; then
-        echo "*** Error: icon file $2 does not exist." >&2
-        exit 1
-fi
-
-if [ ! -f $3 ]; then
-        echo "*** Error: icon1 file $3 does not exist." >&2
         exit 1
 fi
 
@@ -121,9 +111,9 @@ fi
 # Parse the path to colorful icon
 pathstr="package/upointech/transvpnv3/icon/ispeed64black.png"
 if [ ${pathstr:0:1} = '/' ]; then
-        col_icon=$2
+        col_icon=$pathstr
 else
-        col_icon=${BASEDIR}/$2
+        col_icon=${BASEDIR}/$pathstr
 fi
 
 col_file=${col_icon##*/}
@@ -131,14 +121,14 @@ col_file=${col_icon##*/}
 # Parse the path to black-and-white icon
 pathstr="package/upointech/transvpnv3/icon/ispeed64.png"
 if [ ${pathstr:0:1} = '/' ]; then
-        mono_icon=$3
+        mono_icon=$pathstr
 else
-        mono_icon=${BASEDIR}/$3
+        mono_icon=${BASEDIR}/$pathstr
 fi
 
 #Parse the vendor, this is a optional parameter
-if [ $# -eq 4 ]; then
-	vendor=_$4
+if [ $# -eq 2 ]; then
+	vendor=_$2
 else
 	vendor=""
 fi
