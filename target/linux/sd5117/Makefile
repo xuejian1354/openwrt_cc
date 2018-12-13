@@ -13,7 +13,7 @@ SUBTARGETS:=sd5117
 FEATURES:=squashfs
 CPU_TYPE:=cortex-a9
 
-KERNEL_PATCHVER:=3.10
+KERNEL_PATCHVER:=3.10.53
 
 include $(INCLUDE_DIR)/target.mk
 

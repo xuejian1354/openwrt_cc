@@ -139,6 +139,6 @@ define BuildKernel
   image-prereq:
 	@+$(NO_TRACE_MAKE) -s -C image prereq TARGET_BUILD=
 
-  prereq: image-prereq
+  prereq:
 
 endef
