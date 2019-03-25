@@ -167,4 +167,4 @@ rm -rf $tmp_dir
 
 echo "Generated CTC package ${ctc_ipk_str}.tar.gz to $dest_dir"
 
-find -L bin/ -name *.ipk | grep "packages/base" | grep -v "transvpn" | xargs rm
+find -L bin/ -name *.ipk | grep "packages/base" | grep -v "transvpn" | xargs -i rm {} >/dev/null

@@ -196,7 +196,7 @@ menuconfig EXTERNAL_TOOLCHAIN
 		default "arm-linux-uclibc-"     if TARGET_ZTE
 		default "arm-linux-uclibcgnueabi-"     if TARGET_ZXIC || TARGET_ZXIC2791
 		default "arm-buildroot-linux-gnueabi-"     if TARGET_ZXIC2791V1
-		default "arm-buildroot-linux-uclibcgnueabi-"     if TARGET_ZTE279121
+		default "arm-zx279127-linux-uclibcgnueabi-"     if TARGET_ZTE279121
 		default "arm-sanechips-linux-gnueabihf-"     if TARGET_ZTE279131
 		default "arm-linux-uclibceabi-"   if TARGET_HUAWEI
 		default "arm-openwrt-linux-"   if TARGET_HI5681 || TARGET_HI5662
