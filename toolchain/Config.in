@@ -176,7 +176,7 @@ menuconfig EXTERNAL_TOOLCHAIN
 		default "arm-279121-linux-uclibc"     if TARGET_ZTE279121
 		default "arm-279131-linux-uclibc"     if TARGET_ZTE279131
 		default "arm-510-linux"   if TARGET_sd5116v1
-		default "arm-sd5117-linux"   if TARGET_sd5117
+		default "arm-sd5117-linux-uclibceabi"   if TARGET_sd5117
 		default "arm-linux"   if TARGET_HUAWEI
 		default "arm-openwrt-linux"   if TARGET_HI5681
 		default "arm-hi5662-linux"   if TARGET_HI5662
@@ -198,7 +198,7 @@ menuconfig EXTERNAL_TOOLCHAIN
 		default "arm-buildroot-linux-gnueabi-"     if TARGET_ZXIC2791V1
 		default "arm-zx279127-linux-uclibcgnueabi-"     if TARGET_ZTE279121
 		default "arm-sanechips-linux-gnueabihf-"     if TARGET_ZTE279131
-		default "arm-linux-uclibceabi-"   if TARGET_HUAWEI
+		default "arm-sd5117-linux-uclibceabi-"   if TARGET_HUAWEI
 		default "arm-openwrt-linux-"   if TARGET_HI5681 || TARGET_HI5662
 		default "rsdk-linux-"  if TARGET_REALTEK
 		default "msdk-linux-"  if TARGET_RTL960XC
