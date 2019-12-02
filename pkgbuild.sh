@@ -48,6 +48,36 @@ generate_app_json() {
         rom=`required_field Installed-Size $control_dir`
         ram=`required_field MemoryLimit $control_dir`
 
+        # Parse the path to colorful icon
+        if [ "${pkg}" == "transvpnv3" ]; then
+          pathstr="package/upointech/transvpnv3/icon/ispeed64black.png"
+        elif [ "${pkg}" == "nets" ]; then
+          pathstr="package/xbsafe/nets/icon/speed.png"
+        fi
+
+        if [ ${pathstr:0:1} = '/' ]; then
+          col_icon=$pathstr
+        else
+          col_icon=${BASEDIR}/$pathstr
+        fi
+
+        col_file=${col_icon##*/}
+
+        # Parse the path to black-and-white icon
+        if [ "${pkg}" == "transvpnv3" ]; then
+          pathstr="package/upointech/transvpnv3/icon/ispeed64.png"
+        elif [ "${pkg}" == "nets" ]; then
+          pathstr="package/xbsafe/nets/icon/speed1.png"
+        fi
+
+        if [ ${pathstr:0:1} = '/' ]; then
+          mono_icon=$pathstr
+        else
+          mono_icon=${BASEDIR}/$pathstr
+        fi
+
+        mono_file=${mono_icon##*/}
+
         if [ ! -f $control_dir/control ]; then
                 echo "***Error: Control file $control_dir/control is not exist."
                 return 1
@@ -58,7 +88,11 @@ generate_app_json() {
 
         echo -e "\t\"PlatformID\": \"OPKG\"," >> $control_dir/app.json
         echo -e "\t\"appsign\": \"${appsign}${vendor_name}\"," >> $control_dir/app.json
-        echo -e "\t\"appname\": \"游戏加速器\"," >> $control_dir/app.json
+        if [ "${pkg}" == "transvpnv3" ]; then
+          echo -e "\t\"appname\": \"游戏加速器\"," >> $control_dir/app.json
+        elif [ "${pkg}" == "nets" ]; then
+          echo -e "\t\"appname\": \"插件测速\"," >> $control_dir/app.json
+        fi
         echo -e "\t\"version\": \"$version\"," >> $control_dir/app.json
         echo -e "\t\"dep_version\": \"\"," >> $control_dir/app.json
         echo -e "\t\"description\": \"$desp\"," >> $control_dir/app.json
@@ -108,32 +142,12 @@ else
         ipk_name=${BASEDIR}/$1
 fi
 
-# Parse the path to colorful icon
-pathstr="package/upointech/transvpnv3/icon/ispeed64black.png"
-if [ ${pathstr:0:1} = '/' ]; then
-        col_icon=$pathstr
-else
-        col_icon=${BASEDIR}/$pathstr
-fi
-
-col_file=${col_icon##*/}
-
-# Parse the path to black-and-white icon
-pathstr="package/upointech/transvpnv3/icon/ispeed64.png"
-if [ ${pathstr:0:1} = '/' ]; then
-        mono_icon=$pathstr
-else
-        mono_icon=${BASEDIR}/$pathstr
-fi
-
 #Parse the vendor, this is a optional parameter
 if [ $# -eq 2 ]; then
 	vendor=_$2
 else
 	vendor=""
 fi
-
-mono_file=${mono_icon##*/}
 
 dest_dir=${ipk_name%/*}
 tmp_dir=$dest_dir/CTC_PKG_BUILD.$$
@@ -167,4 +181,4 @@ rm -rf $tmp_dir
 
 echo "Generated CTC package ${ctc_ipk_str}.tar.gz to $dest_dir"
 
-find -L bin/ -name *.ipk | grep "packages/base" | grep -v "transvpn" | xargs -i rm {} >/dev/null
+#find -L bin/ -name *.ipk | grep "packages/base" | grep -v "${pkg}" | xargs -i rm {} >/dev/null
